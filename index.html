@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NotFortnite</title>
+  <link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+  <canvas id="game-canvas"></canvas>
+
+  <div id="menu-screen">
+    <div id="menu-panel">
+      <h1 id="game-title">NotFortnite</h1>
+      <p id="menu-subtitle">A Battle Royale Adventure</p>
+      <button id="play-btn">Play Game</button>
+      <p id="build-time"></p>
+    </div>
+  </div>
+
+  <div id="pause-screen" class="hidden">
+    <div id="pause-panel">
+      <h2>Paused</h2>
+      <button id="resume-btn">Resume</button>
+      <button id="quit-btn">Quit to Menu</button>
+    </div>
+  </div>
+
+  <script type="module" src="src/main.js"></script>
+
+  <script>
+    if ('serviceWorker' in navigator &&
+        location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      const hadController = !!navigator.serviceWorker.controller;
+      navigator.serviceWorker.register('/notfortnite/sw.js', {
+        scope: '/notfortnite/',
+        updateViaCache: 'none'
+      }).then(reg => {
+        if (reg.waiting && hadController) {
+          window.location.reload();
+          return;
+        }
+        reg.addEventListener('updatefound', () => {
+          const sw = reg.installing;
+          sw.addEventListener('statechange', () => {
+            if (sw.state === 'activated' && hadController) {
+              window.location.reload();
+            }
+          });
+        });
+      });
+    }
+  </script>
+</body>
+</html>
