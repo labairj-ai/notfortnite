@@ -32,18 +32,25 @@ export function createMatch(seed) {
 
 export function addPlayer(m, { id, name, custom, isBot }) {
   const rng = m.rng;
+  // retry until the spawn is on dry land (hosts set m.heightAt after createMatch)
+  let sx = 0, sz = 0;
+  for (let i = 0; i < 60; i++) {
+    sx = (rng() - 0.5) * (MAP_SIZE - 140);
+    sz = (rng() - 0.5) * (MAP_SIZE - 140);
+    if (!m.heightAt || m.heightAt(sx, sz) > 1.4) break;
+  }
   const p = {
     id, name, custom: custom || null, isBot: !!isBot,
-    x: (rng() - 0.5) * (MAP_SIZE - 120),
+    x: sx,
     y: PLAYER.DROP_ALT,
-    z: (rng() - 0.5) * (MAP_SIZE - 120),
+    z: sz,
     yaw: rng() * Math.PI * 2, pitch: 0,
     hp: PLAYER.HP, shield: 0,
     alive: true, kills: 0, placement: 0,
     weapon: 'pickaxe', rarity: 0,
     anim: 0,                    // bitmask: 1 moving, 2 shooting
     // bot brain
-    bot: isBot ? { tx: 0, tz: 0, retarget: 0, shootCd: 1 + rng() * 2, enemy: null } : null,
+    bot: isBot ? { tx: 0, tz: 0, retarget: 0, shootCd: 1 + rng() * 2, enemy: null, reaction: 0 } : null,
   };
   if (isBot) {
     p.y = 0; // bots skip the skydive; placed on ground by first tick
@@ -80,7 +87,11 @@ export function damagePlayer(m, targetId, dmg, killerId, api) {
     remaining -= absorbed;
   }
   t.hp -= remaining;
-  api.onEvent({ t: 'damage', id: targetId, hp: t.hp, shield: t.shield, by: killerId });
+  api.onEvent({
+    t: 'damage', id: targetId, hp: t.hp, shield: t.shield, by: killerId,
+    dmg, toShield: dmg - remaining > 0,
+    x: t.x, y: t.y, z: t.z,
+  });
   if (t.hp <= 0) {
     t.hp = 0;
     t.alive = false;
@@ -222,13 +233,22 @@ function tickBot(m, b, dt, api) {
   brain.retarget -= dt;
   if (brain.retarget <= 0) {
     brain.retarget = 0.8;
-    let best = null, bestD = 45;
+    let best = null, bestD = 30;
     for (const p of m.players.values()) {
       if (p.id === b.id || !p.alive || p.y > 40) continue; // ignore skydivers
       const d = dist2d(b.x, b.z, p.x, p.z);
-      if (d < bestD) { bestD = d; best = p; }
+      if (d >= bestD) continue;
+      // at most 2 bots gang up on the same target
+      let focused = 0;
+      for (const q of m.players.values()) {
+        if (q.isBot && q.alive && q.id !== b.id && q.bot && q.bot.enemy === p.id) focused++;
+      }
+      if (focused >= 2) continue;
+      bestD = d; best = p;
     }
-    brain.enemy = best ? best.id : null;
+    const newEnemy = best ? best.id : null;
+    if (newEnemy !== brain.enemy) brain.reaction = 1.0 + m.rng() * 0.8; // notice delay
+    brain.enemy = newEnemy;
 
     // movement goal
     const distToStorm = dist2d(b.x, b.z, s.cx, s.cz);
@@ -274,11 +294,13 @@ function tickBot(m, b, dt, api) {
   b.y = api.heightAt(b.x, b.z);
   b.anim = moving ? 1 : 0;
 
-  // shoot
+  // shoot — after a reaction delay, and never in the first seconds of a match
+  // (everyone is "looting"); bots are beatable on purpose
   brain.shootCd -= dt;
-  if (enemy && enemy.alive && brain.shootCd <= 0) {
+  brain.reaction -= dt;
+  if (enemy && enemy.alive && brain.shootCd <= 0 && brain.reaction <= 0 && m.time > 6) {
     const w = WEAPONS[b.weapon] || WEAPONS.pistol;
-    brain.shootCd = Math.max(0.25, w.rate) + m.rng() * 0.5;
+    brain.shootCd = Math.max(0.55, w.rate) + m.rng() * 0.7;
     const d = dist2d(b.x, b.z, enemy.x, enemy.z);
     if (d <= w.range) {
       b.anim |= 2;
@@ -287,10 +309,9 @@ function tickBot(m, b, dt, api) {
         fx: b.x, fy: b.y + 1.5, fz: b.z,
         tx: enemy.x, ty: enemy.y + 1.2, tz: enemy.z,
       });
-      // hit chance falls with distance; bots are beatable on purpose
-      const hitChance = Math.max(0.08, 0.5 - d * 0.009);
+      const hitChance = Math.max(0.04, 0.26 - d * 0.006);
       if (m.rng() < hitChance) {
-        const dmg = Math.round(w.dmg * RARITIES[b.rarity].mult * (0.8 + m.rng() * 0.3));
+        const dmg = Math.round(w.dmg * RARITIES[b.rarity].mult * (0.6 + m.rng() * 0.35));
         damagePlayer(m, enemy.id, dmg, b.id, api);
       }
     }

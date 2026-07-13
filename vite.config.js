@@ -6,6 +6,10 @@ const buildTime = new Date().toISOString();
 
 export default defineConfig({
   base: '/notfortnite/',
+  resolve: {
+    // keep a single copy of three when importing three/addons
+    dedupe: ['three'],
+  },
   define: {
     __BUILD_TIME__: JSON.stringify(buildTime),
   },

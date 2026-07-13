@@ -16,6 +16,12 @@ import { createWorldView, supportHeight, resolveWalls, raycastWorld, raySphere }
 import { connect, getServerUrl, saveServerUrl } from './net.js';
 import { unlockAudio, sfx } from './sfx.js';
 import { createUI } from './ui.js';
+import { createSky, SUN_DIR } from './sky.js';
+import { createFX } from './fx.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const $ = (id) => document.getElementById(id);
 const G = BUILD.GRID;
@@ -23,10 +29,17 @@ const G = BUILD.GRID;
 // ---------------------------------------------------------------------------
 // Boot
 // ---------------------------------------------------------------------------
+const QUALITY = IS_TOUCH ? 'low' : 'high';
 const canvas = $('game-canvas');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: !IS_TOUCH });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, IS_TOUCH ? 1.6 : 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.12;
+if (QUALITY === 'high') {
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+}
 
 const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.1, 700);
 const ui = createUI();
@@ -42,6 +55,7 @@ window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  if (S && S.composer) S.composer.setSize(window.innerWidth, window.innerHeight);
 });
 
 // ---------------------------------------------------------------------------
@@ -51,24 +65,50 @@ let S = null; // active session
 
 function makeScene() {
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color('#8fc4e8');
-  scene.fog = new THREE.Fog('#8fc4e8', 90, IS_TOUCH ? 230 : 340);
-  const sun = new THREE.DirectionalLight('#fff6e0', 1.6);
-  sun.position.set(120, 200, 80);
-  scene.add(sun);
-  scene.add(new THREE.AmbientLight('#cfe4ff', 0.75));
-  const hemi = new THREE.HemisphereLight('#bcd9ff', '#6a8f5a', 0.5);
-  scene.add(hemi);
+  scene.background = new THREE.Color('#a9d3ee');
+  scene.fog = new THREE.Fog('#bfe0f2', 110, IS_TOUCH ? 260 : 380);
+  const sun = new THREE.DirectionalLight('#fff2d8', 2.1);
+  sun.position.copy(SUN_DIR).multiplyScalar(160);
+  if (QUALITY === 'high') {
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    const ext = 70;
+    sun.shadow.camera.left = -ext;
+    sun.shadow.camera.right = ext;
+    sun.shadow.camera.top = ext;
+    sun.shadow.camera.bottom = -ext;
+    sun.shadow.camera.near = 20;
+    sun.shadow.camera.far = 420;
+    sun.shadow.bias = -0.0006;
+  }
+  scene.add(sun, sun.target);
+  scene.add(new THREE.AmbientLight('#d8e8ff', 0.55));
+  scene.add(new THREE.HemisphereLight('#b8dcff', '#5f8f4e', 0.75));
+  scene.userData.sun = sun;
   return scene;
+}
+
+function makeComposer(scene) {
+  if (QUALITY !== 'high') return null;
+  const composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
+  const bloom = new UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight), 0.38, 0.7, 0.86);
+  composer.addPass(bloom);
+  composer.addPass(new OutputPass());
+  return composer;
 }
 
 function createSession(seed, mode) {
   myChar = null; // character mesh belongs to the previous scene
   const scene = makeScene();
   const world = createWorld(seed);
-  const view = createWorldView(scene, world);
+  const view = createWorldView(scene, world, QUALITY);
   return {
     mode, seed, scene, world, view,
+    sky: createSky(scene),
+    fx: createFX(scene),
+    composer: makeComposer(scene),
     state: 'playing',
     match: null,          // offline
     net: null,            // online
@@ -107,6 +147,7 @@ function startOffline() {
   const seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
   S = createSession(seed, 'offline');
   S.match = createMatch(seed);
+  S.match.heightAt = S.world.heightAt;
   S.me = addPlayer(S.match, { id: 'me', name: custom.name || 'Player', custom });
   fillWithBots(S.match, MATCH_PLAYERS);
   spawnFloorLoot(S.match, S.world);
@@ -287,6 +328,9 @@ function handleEvent(ev) {
       } else if (ev.by === S.myId) {
         ui.hitmarker();
         sfx.hit();
+        if (ev.dmg && ev.x !== undefined) {
+          S.fx.number(String(ev.dmg), ev.x, ev.y + 2.1, ev.z, ev.toShield ? '#5ad8ff' : '#ffffff');
+        }
       }
       break;
     case 'kill': {
@@ -294,6 +338,10 @@ function handleEvent(ev) {
       const meVictim = ev.victim === S.myId;
       ui.killfeed(ev.killerName + ' eliminated ' + ev.victimName, meKiller || meVictim);
       if (meKiller) { S.me.kills = ev.kills; }
+      {
+        const victim = S.mode === 'offline' ? S.match.players.get(ev.victim) : S.remote.get(ev.victim);
+        if (victim) S.fx.killBurst(victim.x, victim.y, victim.z);
+      }
       if (meVictim) { S.killedBy = ev.killerName; onLocalDeath(); }
       // remove victim's character mesh after a beat
       const e = S.entities.get(ev.victim);
@@ -303,6 +351,7 @@ function handleEvent(ev) {
     case 'shot': {
       if (ev.from !== S.myId) {
         addTracer(ev.fx, ev.fy, ev.fz, ev.tx, ev.ty, ev.tz);
+        S.fx.muzzleFlash(ev.fx, ev.fy, ev.fz);
         const d = S.me ? dist2d(ev.fx, ev.fz, S.me.x, S.me.z) : 999;
         if (d < 70) sfx.shoot('pistol');
         const e = S.entities.get(ev.from);
@@ -527,6 +576,8 @@ function fireActiveItem() {
   // muzzle roughly at chest height
   const mx = S.me.x, my = S.me.y + 1.4, mz = S.me.z;
   addTracer(mx, my, mz, hitPoint.x, hitPoint.y, hitPoint.z);
+  if (!w.melee) S.fx.muzzleFlash(mx + dir.x, my + dir.y, mz + dir.z);
+  if (playerHit || worldHit) S.fx.hitSparks(hitPoint.x, hitPoint.y, hitPoint.z);
   if (S.mode === 'online') {
     S.net.send({ t: 'shot', fx: mx, fy: my, fz: mz, tx: hitPoint.x, ty: hitPoint.y, tz: hitPoint.z });
   }
@@ -537,11 +588,22 @@ function applyDamage(targetId, dmg) {
   else S.net.send({ t: 'hit', target: targetId, dmg });
 }
 
+const HARVEST_FX = {
+  tree: { color: '#5a9c3a', num: '#c98d4b' },
+  rock: { color: '#9a9a92', num: '#c96a5a' },
+  crate: { color: '#b8c4d2', num: '#aab6c5' },
+};
+
 function hitProp(id, isPickaxe) {
   const p = S.world.props.get(id);
   if (!p) return;
   p.hp--;
-  if (isPickaxe) grantMats(HARVEST[p.type].mat, HARVEST[p.type].perHit);
+  const fx = HARVEST_FX[p.type];
+  S.fx.harvestBurst(p.x, p.y + 1.6, p.z, fx.color);
+  if (isPickaxe) {
+    grantMats(HARVEST[p.type].mat, HARVEST[p.type].perHit);
+    S.fx.number('+' + HARVEST[p.type].perHit, p.x, p.y + 2.6, p.z, fx.num, 0.8);
+  }
   if (p.hp <= 0) {
     S.world.props.delete(id);
     S.view.removePropMesh(id);
@@ -748,7 +810,9 @@ function addTracer(x1, y1, z1, x2, y2, z2) {
   const geo = new THREE.BufferGeometry().setFromPoints([
     new THREE.Vector3(x1, y1, z1), new THREE.Vector3(x2, y2, z2),
   ]);
-  const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: '#ffe9a0', transparent: true, opacity: 0.9 }));
+  const line = new THREE.Line(geo, new THREE.LineBasicMaterial({
+    color: '#ffe9a0', transparent: true, opacity: 0.9, toneMapped: false,
+  }));
   S.scene.add(line);
   S.tracers.push({ line, t: 0.12 });
 }
@@ -793,8 +857,10 @@ function updateEntities(dt) {
     e.char.position.x += (p.x - e.char.position.x) * lerp;
     e.char.position.y += (p.y - e.char.position.y) * lerp;
     e.char.position.z += (p.z - e.char.position.z) * lerp;
-    // shortest-arc yaw lerp
-    let dy = p.yaw - e.char.rotation.y;
+    // shortest-arc yaw lerp; humans and bots use opposite yaw conventions,
+    // and the mesh's face points +z
+    const meshYaw = p.isBot ? p.yaw : p.yaw + Math.PI;
+    let dy = meshYaw - e.char.rotation.y;
     while (dy > Math.PI) dy -= Math.PI * 2;
     while (dy < -Math.PI) dy += Math.PI * 2;
     e.char.rotation.y += dy * (S.mode === 'online' ? Math.min(1, dt * 10) : 1);
@@ -862,7 +928,8 @@ function loop(now) {
     S.scene.add(myChar);
   }
   myChar.position.set(S.me.x, S.me.y, S.me.z);
-  myChar.rotation.y = S.yaw;
+  myChar.rotation.y = S.yaw + Math.PI; // mesh face is +z; player forward is -z
+
   myChar.visible = S.me.alive;
   setHeldItem(myChar, S.me.weapon);
   animateCharacter(myChar, dt, (S.me.anim & 1) !== 0, (S.me.anim & 2) !== 0);
@@ -870,10 +937,17 @@ function loop(now) {
   updateEntities(dt);
   updateTracers(dt);
   updateCamera();
+  S.fx.update(dt);
+  S.sky.update(dt, camera);
+
+  // shadow camera follows the player so shadows stay crisp anywhere on the map
+  const sun = S.scene.userData.sun;
+  sun.position.set(S.me.x + SUN_DIR.x * 160, SUN_DIR.y * 160, S.me.z + SUN_DIR.z * 160);
+  sun.target.position.set(S.me.x, 0, S.me.z);
 
   const storm = S.mode === 'offline' ? S.match.storm : S.stormView;
   S.view.updateStorm(storm);
-  S.view.animateLoot(now / 1000);
+  S.view.tick(now / 1000);
 
   // HUD
   ui.setHealth(S.me.hp, S.me.shield);
@@ -883,7 +957,8 @@ function loop(now) {
   ui.setKills(S.me.kills);
   ui.drawMinimap(stormForUi, S.me.x, S.me.z, S.yaw);
 
-  renderer.render(S.scene, camera);
+  if (S.composer) S.composer.render();
+  else renderer.render(S.scene, camera);
   ctl.consumeFrame();
 }
 requestAnimationFrame(loop);

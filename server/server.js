@@ -29,10 +29,13 @@ newLobby();
 
 function newLobby() {
   const seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
+  const world = createWorld(seed);
+  const match = createMatch(seed);
+  match.heightAt = world.heightAt;
   room = {
     seed,
-    world: createWorld(seed),
-    match: createMatch(seed),
+    world,
+    match,
     state: 'lobby',        // lobby | play | ended
     countdown: null,
     deltas: { buildsGone: [], propsGone: [], chestsOpened: [], playerBuilds: [] },
