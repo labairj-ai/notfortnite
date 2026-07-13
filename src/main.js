@@ -9,7 +9,7 @@ import {
 } from '../shared/match.js';
 import {
   buildCharacter, animateCharacter, setHeldItem, makeNameTag,
-  SKINS, OUTFITS, HATS, loadCustom, saveCustom,
+  SKINS, OUTFITS, HATS, HAIRS, HAIR_COLORS, loadCustom, saveCustom,
 } from './character.js';
 import { createControls, IS_TOUCH } from './controls.js';
 import { createWorldView, supportHeight, resolveWalls, raycastWorld, raySphere } from './world.js';
@@ -833,11 +833,25 @@ function updateTracers(dt) {
 // ---------------------------------------------------------------------------
 // Other players' rendering
 // ---------------------------------------------------------------------------
+function botCustom(id) {
+  // deterministic per-id look so a bot keeps its style all match
+  let h = 7;
+  for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) | 0;
+  h = Math.abs(h);
+  return {
+    skin: h % SKINS.length,
+    outfit: (h >> 2) % OUTFITS.length,
+    hat: (h >> 5) % 7 < HATS.length ? (h >> 5) % HATS.length : 0,
+    hair: (h >> 8) % HAIRS.length,
+    hairColor: (h >> 11) % HAIR_COLORS.length,
+  };
+}
+
 function syncEntities(players) {
   for (const p of players) {
     if (p.id === S.myId) continue;
     if (!S.entities.has(p.id) && p.alive) {
-      const char = buildCharacter(p.custom || { skin: p.isBot ? 1 : 0, outfit: Math.floor(Math.random() * 8), hat: 0 });
+      const char = buildCharacter(p.custom || botCustom(p.id));
       char.add(makeNameTag(p.name, p.isBot));
       S.scene.add(char);
       S.entities.set(p.id, { char, tx: p.x, ty: p.y, tz: p.z, tyaw: p.yaw, shootT: 0 });
@@ -1007,23 +1021,73 @@ $('lobby-cancel-btn').addEventListener('click', () => {
   endSession();
 });
 
-// customization screen
+// ---------------------------------------------------------------------------
+// Customization screen with live 3D preview
+// ---------------------------------------------------------------------------
+let preview = null;
+
+function initPreview() {
+  if (preview) return preview;
+  const pCanvas = $('custom-preview');
+  const pRenderer = new THREE.WebGLRenderer({ canvas: pCanvas, antialias: true, alpha: true });
+  pRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  pRenderer.setSize(pCanvas.clientWidth, pCanvas.clientHeight, false);
+  pRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+  const pScene = new THREE.Scene();
+  const pCam = new THREE.PerspectiveCamera(38, pCanvas.clientWidth / pCanvas.clientHeight, 0.1, 20);
+  pCam.position.set(0, 1.35, 3.2);
+  pCam.lookAt(0, 1.0, 0);
+  const key = new THREE.DirectionalLight('#fff2d8', 2.2);
+  key.position.set(2, 3, 3);
+  pScene.add(key);
+  pScene.add(new THREE.AmbientLight('#cfe0ff', 0.7));
+  pScene.add(new THREE.HemisphereLight('#b8dcff', '#5f8f4e', 0.7));
+  preview = { renderer: pRenderer, scene: pScene, cam: pCam, char: null, spin: 0 };
+  return preview;
+}
+
+function refreshPreview() {
+  const p = initPreview();
+  if (p.char) p.scene.remove(p.char);
+  p.char = buildCharacter(custom);
+  p.scene.add(p.char);
+}
+
+function previewLoop() {
+  if ($('custom-screen').classList.contains('hidden')) return;
+  requestAnimationFrame(previewLoop);
+  const p = preview;
+  if (!p || !p.char) return;
+  p.spin += 0.012;
+  p.char.rotation.y = Math.sin(p.spin) * 0.9 + Math.PI * 0.05;
+  animateCharacter(p.char, 1 / 60, false, false);
+  p.renderer.render(p.scene, p.cam);
+}
+
 function openCustomize() {
   ui.showScreen('custom-screen');
   $('custom-name').value = custom.name || '';
-  buildSwatches('skin-swatches', SKINS, custom.skin, (i) => { custom.skin = i; });
-  buildSwatches('outfit-swatches', OUTFITS, custom.outfit, (i) => { custom.outfit = i; });
-  const hatWrap = $('hat-options');
-  hatWrap.innerHTML = '';
-  HATS.forEach((h, i) => {
+  buildSwatches('skin-swatches', SKINS, custom.skin, (i) => { custom.skin = i; refreshPreview(); });
+  buildSwatches('outfit-swatches', OUTFITS, custom.outfit, (i) => { custom.outfit = i; refreshPreview(); });
+  buildSwatches('hair-color-swatches', HAIR_COLORS, custom.hairColor, (i) => { custom.hairColor = i; refreshPreview(); });
+  buildOptionRow('hair-options', HAIRS, custom.hair, 'No Hair', (i) => { custom.hair = i; refreshPreview(); });
+  buildOptionRow('hat-options', HATS, custom.hat, 'No Hat', (i) => { custom.hat = i; refreshPreview(); });
+  refreshPreview();
+  requestAnimationFrame(previewLoop);
+}
+
+function buildOptionRow(id, options, selected, noneLabel, onPick) {
+  const wrap = $(id);
+  wrap.innerHTML = '';
+  options.forEach((o, i) => {
     const b = document.createElement('button');
-    b.className = 'hat-btn' + (i === custom.hat ? ' selected' : '');
-    b.textContent = h === 'none' ? 'No Hat' : h[0].toUpperCase() + h.slice(1);
+    b.className = 'hat-btn' + (i === selected ? ' selected' : '');
+    b.textContent = o === 'none' ? noneLabel : o[0].toUpperCase() + o.slice(1);
     b.addEventListener('click', () => {
-      custom.hat = i;
-      hatWrap.querySelectorAll('.hat-btn').forEach((el, j) => el.classList.toggle('selected', j === i));
+      onPick(i);
+      wrap.querySelectorAll('.hat-btn').forEach((el, j) => el.classList.toggle('selected', j === i));
     });
-    hatWrap.appendChild(b);
+    wrap.appendChild(b);
   });
 }
 

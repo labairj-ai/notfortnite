@@ -30,16 +30,26 @@
 
   <!-- ===================== CUSTOMIZE ===================== -->
   <div id="custom-screen" class="screen hidden">
-    <div class="panel">
+    <div class="panel" id="custom-panel">
       <h2>Customize</h2>
-      <label class="custom-label" for="custom-name">Name</label>
-      <input id="custom-name" type="text" maxlength="16" placeholder="Player" autocomplete="off">
-      <label class="custom-label">Skin</label>
-      <div id="skin-swatches" class="swatch-row"></div>
-      <label class="custom-label">Outfit</label>
-      <div id="outfit-swatches" class="swatch-row"></div>
-      <label class="custom-label">Hat</label>
-      <div id="hat-options" class="hat-row"></div>
+      <div id="custom-columns">
+        <div id="custom-preview-wrap">
+          <canvas id="custom-preview" width="240" height="300"></canvas>
+        </div>
+        <div id="custom-controls">
+          <label class="custom-label" for="custom-name">Name</label>
+          <input id="custom-name" type="text" maxlength="16" placeholder="Player" autocomplete="off">
+          <label class="custom-label">Skin</label>
+          <div id="skin-swatches" class="swatch-row"></div>
+          <label class="custom-label">Outfit</label>
+          <div id="outfit-swatches" class="swatch-row"></div>
+          <label class="custom-label">Hair</label>
+          <div id="hair-options" class="hat-row"></div>
+          <div id="hair-color-swatches" class="swatch-row"></div>
+          <label class="custom-label">Hat</label>
+          <div id="hat-options" class="hat-row"></div>
+        </div>
+      </div>
       <button id="custom-save-btn" class="big-btn">Save</button>
     </div>
   </div>

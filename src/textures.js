@@ -94,31 +94,50 @@ export function metalTexture() {
   }, 1);
 }
 
-// Cartoon face for characters — cached per skin color.
+// Cartoon face for characters — big expressive eyes, cached per skin color.
 const faceCache = new Map();
 export function faceTexture(skinColor) {
   if (faceCache.has(skinColor)) return faceCache.get(skinColor);
-  const tex = canvasTex(64, (ctx, S) => {
+  const tex = canvasTex(128, (ctx, S) => {
     ctx.fillStyle = skinColor;
     ctx.fillRect(0, 0, S, S);
-    // eyes
-    for (const ex of [S * 0.32, S * 0.68]) {
+    for (const [ex, tilt] of [[S * 0.34, -1], [S * 0.66, 1]]) {
+      // white
       ctx.fillStyle = '#fff';
-      ctx.beginPath(); ctx.ellipse(ex, S * 0.42, 6.5, 8, 0, 0, 7); ctx.fill();
-      ctx.fillStyle = '#20242e';
-      ctx.beginPath(); ctx.arc(ex + 1, S * 0.44, 3.4, 0, 7); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(ex, S * 0.45, 12, 15.5, tilt * 0.06, 0, 7); ctx.fill();
+      // iris + pupil
+      ctx.fillStyle = '#3d7bd6';
+      ctx.beginPath(); ctx.arc(ex + tilt, S * 0.47, 7.5, 0, 7); ctx.fill();
+      ctx.fillStyle = '#101418';
+      ctx.beginPath(); ctx.arc(ex + tilt, S * 0.47, 4, 0, 7); ctx.fill();
+      // sparkle highlights
       ctx.fillStyle = '#fff';
-      ctx.beginPath(); ctx.arc(ex + 2.2, S * 0.41, 1.1, 0, 7); ctx.fill();
+      ctx.beginPath(); ctx.arc(ex + tilt + 2.6, S * 0.43, 2.4, 0, 7); ctx.fill();
+      ctx.beginPath(); ctx.arc(ex + tilt - 2.4, S * 0.5, 1.1, 0, 7); ctx.fill();
+      // upper lid line
+      ctx.strokeStyle = 'rgba(70,45,30,0.75)';
+      ctx.lineWidth = 2.6;
+      ctx.beginPath(); ctx.ellipse(ex, S * 0.45, 12, 15.5, tilt * 0.06, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke();
+      // brow with a bit of attitude
+      ctx.strokeStyle = 'rgba(60,40,25,0.9)';
+      ctx.lineWidth = 3.4;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(ex - 12 * tilt, S * 0.26);
+      ctx.quadraticCurveTo(ex, S * 0.215, ex + 12 * tilt, S * 0.245);
+      ctx.stroke();
     }
-    // brows
-    ctx.strokeStyle = 'rgba(60,40,25,0.85)';
-    ctx.lineWidth = 2.4;
-    ctx.beginPath(); ctx.moveTo(S * 0.24, S * 0.3); ctx.lineTo(S * 0.4, S * 0.28); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(S * 0.6, S * 0.28); ctx.lineTo(S * 0.76, S * 0.3); ctx.stroke();
-    // determined little mouth
-    ctx.strokeStyle = 'rgba(120,60,50,0.9)';
-    ctx.lineWidth = 2.2;
-    ctx.beginPath(); ctx.moveTo(S * 0.42, S * 0.72); ctx.quadraticCurveTo(S * 0.5, S * 0.76, S * 0.58, S * 0.72); ctx.stroke();
+    // nose hint
+    ctx.strokeStyle = 'rgba(120,80,60,0.45)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(S * 0.5, S * 0.56); ctx.lineTo(S * 0.485, S * 0.63); ctx.stroke();
+    // confident smirk
+    ctx.strokeStyle = 'rgba(110,55,45,0.95)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(S * 0.4, S * 0.75);
+    ctx.quadraticCurveTo(S * 0.52, S * 0.815, S * 0.63, S * 0.74);
+    ctx.stroke();
   });
   tex.repeat.set(1, 1);
   faceCache.set(skinColor, tex);

@@ -101,6 +101,22 @@ input[type="text"] {
 
 .custom-label { display: block; text-align: left; font-weight: 700; margin: 12px 0 6px; color: #d9d2f2; }
 
+#custom-panel { max-width: 640px; }
+#custom-columns { display: flex; gap: 18px; align-items: flex-start; }
+#custom-preview-wrap {
+  flex: 0 0 auto;
+  background: linear-gradient(180deg, rgba(120,160,255,0.18), rgba(30,20,60,0.4));
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 12px;
+  overflow: hidden;
+}
+#custom-preview { display: block; width: 240px; height: 300px; }
+#custom-controls { flex: 1 1 auto; min-width: 0; }
+@media (max-width: 640px) {
+  #custom-columns { flex-direction: column; align-items: center; }
+  #custom-preview { width: 180px; height: 200px; }
+}
+
 .swatch-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 .swatch {
   width: 42px; height: 42px;
