@@ -101,7 +101,9 @@ input[type="text"] {
 
 .custom-label { display: block; text-align: left; font-weight: 700; margin: 12px 0 6px; color: #d9d2f2; }
 
-#custom-panel { max-width: 640px; }
+#custom-panel { max-width: 640px; margin: auto 0; }
+/* tall panel: anchor to the top so it scrolls instead of clipping */
+#custom-screen { align-items: flex-start; }
 #custom-columns { display: flex; gap: 18px; align-items: flex-start; }
 #custom-preview-wrap {
   flex: 0 0 auto;

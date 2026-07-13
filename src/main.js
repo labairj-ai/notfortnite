@@ -9,7 +9,7 @@ import {
 } from '../shared/match.js';
 import {
   buildCharacter, animateCharacter, setHeldItem, makeNameTag,
-  SKINS, OUTFITS, HATS, HAIRS, HAIR_COLORS, loadCustom, saveCustom,
+  BODIES, SKINS, OUTFITS, HATS, HAIRS, HAIR_COLORS, loadCustom, saveCustom,
 } from './character.js';
 import { createControls, IS_TOUCH } from './controls.js';
 import { createWorldView, supportHeight, resolveWalls, raycastWorld, raySphere } from './world.js';
@@ -834,11 +834,14 @@ function updateTracers(dt) {
 // Other players' rendering
 // ---------------------------------------------------------------------------
 function botCustom(id) {
-  // deterministic per-id look so a bot keeps its style all match
+  // deterministic per-id look so a bot keeps its style all match;
+  // humanoids are common, mascots (banana/bear/frog/robot) are the treat
   let h = 7;
   for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) | 0;
   h = Math.abs(h);
+  const bodyPool = [0, 0, 1, 1, 0, 2, 3, 1, 4, 5];
   return {
+    body: bodyPool[(h >> 13) % bodyPool.length],
     skin: h % SKINS.length,
     outfit: (h >> 2) % OUTFITS.length,
     hat: (h >> 5) % 7 < HATS.length ? (h >> 5) % HATS.length : 0,
@@ -1067,6 +1070,7 @@ function previewLoop() {
 function openCustomize() {
   ui.showScreen('custom-screen');
   $('custom-name').value = custom.name || '';
+  buildOptionRow('body-options', BODIES, custom.body, 'Default', (i) => { custom.body = i; refreshPreview(); });
   buildSwatches('skin-swatches', SKINS, custom.skin, (i) => { custom.skin = i; refreshPreview(); });
   buildSwatches('outfit-swatches', OUTFITS, custom.outfit, (i) => { custom.outfit = i; refreshPreview(); });
   buildSwatches('hair-color-swatches', HAIR_COLORS, custom.hairColor, (i) => { custom.hairColor = i; refreshPreview(); });

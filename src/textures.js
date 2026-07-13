@@ -94,10 +94,12 @@ export function metalTexture() {
   }, 1);
 }
 
-// Cartoon face for characters — big expressive eyes, cached per skin color.
+// Cartoon face for characters — big expressive eyes, cached per color+style.
+// Styles: 'default', 'female' (lashes + lips), 'banana' (goofy grin).
 const faceCache = new Map();
-export function faceTexture(skinColor) {
-  if (faceCache.has(skinColor)) return faceCache.get(skinColor);
+export function faceTexture(skinColor, style = 'default') {
+  const key = skinColor + '|' + style;
+  if (faceCache.has(key)) return faceCache.get(key);
   const tex = canvasTex(128, (ctx, S) => {
     ctx.fillStyle = skinColor;
     ctx.fillRect(0, 0, S, S);
@@ -118,29 +120,58 @@ export function faceTexture(skinColor) {
       ctx.strokeStyle = 'rgba(70,45,30,0.75)';
       ctx.lineWidth = 2.6;
       ctx.beginPath(); ctx.ellipse(ex, S * 0.45, 12, 15.5, tilt * 0.06, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke();
-      // brow with a bit of attitude
+      // brow — thinner and arched for female, attitude arc otherwise
       ctx.strokeStyle = 'rgba(60,40,25,0.9)';
-      ctx.lineWidth = 3.4;
+      ctx.lineWidth = style === 'female' ? 2.2 : 3.4;
       ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.moveTo(ex - 12 * tilt, S * 0.26);
-      ctx.quadraticCurveTo(ex, S * 0.215, ex + 12 * tilt, S * 0.245);
+      if (style === 'female') {
+        ctx.moveTo(ex - 11 * tilt, S * 0.265);
+        ctx.quadraticCurveTo(ex, S * 0.2, ex + 11 * tilt, S * 0.25);
+      } else {
+        ctx.moveTo(ex - 12 * tilt, S * 0.26);
+        ctx.quadraticCurveTo(ex, S * 0.215, ex + 12 * tilt, S * 0.245);
+      }
+      ctx.stroke();
+      // lashes
+      if (style === 'female') {
+        ctx.strokeStyle = 'rgba(35,22,15,0.9)';
+        ctx.lineWidth = 2;
+        for (let l = 0; l < 3; l++) {
+          const a = -0.5 - l * 0.35;
+          const bx = ex + tilt * (11 + l * 0.6);
+          const by = S * 0.41 - l * 2.4;
+          ctx.beginPath();
+          ctx.moveTo(bx, by);
+          ctx.lineTo(bx + tilt * 4.4, by + Math.sin(a) * 2 - 2.2);
+          ctx.stroke();
+        }
+      }
+    }
+    if (style === 'banana') {
+      // goofy open grin
+      ctx.fillStyle = 'rgba(90,50,25,0.95)';
+      ctx.beginPath();
+      ctx.moveTo(S * 0.34, S * 0.68);
+      ctx.quadraticCurveTo(S * 0.52, S * 0.92, S * 0.68, S * 0.68);
+      ctx.quadraticCurveTo(S * 0.52, S * 0.76, S * 0.34, S * 0.68);
+      ctx.fill();
+    } else {
+      // nose hint
+      ctx.strokeStyle = 'rgba(120,80,60,0.45)';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(S * 0.5, S * 0.56); ctx.lineTo(S * 0.485, S * 0.63); ctx.stroke();
+      // smirk (fuller lips for female)
+      ctx.strokeStyle = style === 'female' ? 'rgba(190,70,90,0.95)' : 'rgba(110,55,45,0.95)';
+      ctx.lineWidth = style === 'female' ? 4.2 : 3;
+      ctx.beginPath();
+      ctx.moveTo(S * 0.4, S * 0.75);
+      ctx.quadraticCurveTo(S * 0.52, S * 0.815, S * 0.63, S * 0.74);
       ctx.stroke();
     }
-    // nose hint
-    ctx.strokeStyle = 'rgba(120,80,60,0.45)';
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(S * 0.5, S * 0.56); ctx.lineTo(S * 0.485, S * 0.63); ctx.stroke();
-    // confident smirk
-    ctx.strokeStyle = 'rgba(110,55,45,0.95)';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(S * 0.4, S * 0.75);
-    ctx.quadraticCurveTo(S * 0.52, S * 0.815, S * 0.63, S * 0.74);
-    ctx.stroke();
   });
   tex.repeat.set(1, 1);
-  faceCache.set(skinColor, tex);
+  faceCache.set(key, tex);
   return tex;
 }
 
