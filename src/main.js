@@ -58,7 +58,7 @@ preloadModels(import.meta.env.BASE_URL).then(() => {
 }).catch((e) => console.warn('character models failed to load', e));
 
 // unified character factory: rigged GLB bodies when loaded, procedural otherwise
-const RIGGED = new Set(['hero']);
+const RIGGED = new Set(['hero', 'knight', 'barbarian', 'mage', 'rogue']);
 function makeCharacter(cust) {
   const bodyKey = BODIES[(cust?.body ?? 0) % BODIES.length];
   if (RIGGED.has(bodyKey)) {
@@ -864,7 +864,8 @@ function botCustom(id) {
   let h = 7;
   for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) | 0;
   h = Math.abs(h);
-  const bodyPool = [6, 6, 6, 1, 6, 2, 3, 6, 4, 5, 0, 6]; // mostly rigged heroes, some mascots
+  // adventurers and heroes are common; mascots are the treat
+  const bodyPool = [7, 8, 9, 10, 6, 7, 8, 2, 9, 10, 3, 6, 4, 5, 7, 10];
   return {
     body: bodyPool[(h >> 13) % bodyPool.length],
     skin: h % SKINS.length,

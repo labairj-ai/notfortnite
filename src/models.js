@@ -1,9 +1,7 @@
-// Rigged GLB characters by Quaternius (CC0/CC-BY, see README credits):
-//  - hero.glb   : Animated Base Character — mannequin + 45 clips (Rigify DEF-* rig)
-//  - male.glb   : Universal Base Characters Superhero Male (UE-style rig, textured)
-//  - female.glb : Universal Base Characters Superhero Female (UE-style rig, textured)
-// The male/female rigs have no clips of their own; we retarget the hero's
-// rotation tracks onto them via a bone-name map.
+// Rigged GLB characters:
+//  - hero.glb : Quaternius "Animated Base Character" — mannequin + clips (CC-BY)
+//  - knight/barbarian/mage/rogue.glb : KayKit Adventurers (CC0) — fully clothed,
+//    textured, each with its own baked animation clips and handslot bones.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
@@ -12,73 +10,55 @@ import {
 } from './character.js';
 import { faceTexture } from './textures.js';
 
-// semantic clip set used by the game (hero clip names, 'Rig|' stripped)
-const CLIPS = {
-  idle: 'Idle_Loop',
-  run: 'Jog_Fwd_Loop',
-  air: 'Jump_Loop',
-  shoot: 'Pistol_Shoot',
-  death: 'Death01',
-  dance: 'Dance_Loop',
+// semantic clip names per rig family
+const HERO_CLIPS = {
+  idle: 'Rig|Idle_Loop',
+  run: 'Rig|Jog_Fwd_Loop',
+  air: 'Rig|Jump_Loop',
+  shoot: 'Rig|Pistol_Shoot',
+  death: 'Rig|Death01',
+  dance: 'Rig|Dance_Loop',
+};
+const KAYKIT_CLIPS = {
+  idle: 'Idle',
+  run: 'Running_A',
+  air: 'Jump_Idle',
+  shoot: '1H_Ranged_Shooting',
+  death: 'Death_A',
+  dance: 'Cheer',
 };
 
-// Rigify (hero, names sanitized by GLTFLoader: dots stripped) -> UE-style (UBC)
-function rigifyToUE() {
-  const map = { root: 'root', 'DEF-hips': 'pelvis', 'DEF-neck': 'neck_01', 'DEF-head': 'Head' };
-  for (let i = 1; i <= 3; i++) map[`DEF-spine00${i}`] = `spine_0${i}`;
-  for (const [s, t] of [['L', 'l'], ['R', 'r']]) {
-    map[`DEF-shoulder${s}`] = `clavicle_${t}`;
-    map[`DEF-upper_arm${s}`] = `upperarm_${t}`;
-    map[`DEF-forearm${s}`] = `lowerarm_${t}`;
-    map[`DEF-hand${s}`] = `hand_${t}`;
-    map[`DEF-thigh${s}`] = `thigh_${t}`;
-    map[`DEF-shin${s}`] = `calf_${t}`;
-    map[`DEF-foot${s}`] = `foot_${t}`;
-    map[`DEF-toe${s}`] = `ball_${t}`;
-    for (const [f, uf] of [['f_index', 'index'], ['f_middle', 'middle'], ['f_pinky', 'pinky'], ['f_ring', 'ring'], ['thumb', 'thumb']]) {
-      for (let i = 1; i <= 3; i++) map[`DEF-${f}0${i}${s}`] = `${uf}_0${i}_${t}`;
-    }
-  }
-  return map;
-}
+export const KAYKIT_KINDS = ['knight', 'barbarian', 'mage', 'rogue'];
 
-// clone a clip keeping only rotation tracks, renaming bones via the map
-function retargetByName(clip, nameMap) {
-  const tracks = [];
-  for (const track of clip.tracks) {
-    const dot = track.name.lastIndexOf('.');
-    const node = track.name.slice(0, dot);
-    const prop = track.name.slice(dot + 1);
-    if (prop !== 'quaternion') continue; // rotations only; positions are rig-scale-specific
-    const target = nameMap[node];
-    if (!target) continue;
-    const t2 = track.clone();
-    t2.name = `${target}.${prop}`;
-    tracks.push(t2);
-  }
-  return new THREE.AnimationClip(clip.name, clip.duration, tracks);
-}
-
-const store = {
-  hero: null,
-  heroClips: {},         // semantic -> clip (DEF rig)
-  ueClips: {},           // semantic -> retargeted clip (UE-style rigs)
-};
+const store = {};       // kind -> { gltf, clips: {semantic->AnimationClip}, scale }
 let loadPromise = null;
+
+function register(kind, gltf, clipMap, targetHeight) {
+  if (!gltf) return;
+  const clips = {};
+  for (const [key, name] of Object.entries(clipMap)) {
+    const clip = gltf.animations.find((a) => a.name === name);
+    if (clip) clips[key] = clip;
+  }
+  // normalize height so every character matches the game's ~1.8m collision
+  const box = new THREE.Box3().setFromObject(gltf.scene);
+  const h = box.max.y - box.min.y;
+  const scale = h > 0.1 ? targetHeight / h : 1;
+  store[kind] = { gltf, clips, scale };
+}
 
 export function preloadModels(baseUrl) {
   if (loadPromise) return loadPromise;
   const loader = new GLTFLoader();
+  const load = (f) => loader.loadAsync(baseUrl + 'models/' + f).catch(() => null);
   loadPromise = Promise.all([
-    loader.loadAsync(baseUrl + 'models/hero.glb'),
-  ]).then(([hero]) => {
-    store.hero = hero;
-    for (const [key, name] of Object.entries(CLIPS)) {
-      const clip = hero.animations.find((a) => a.name === 'Rig|' + name);
-      if (!clip) continue;
-      store.heroClips[key] = clip;
-      store.ueClips[key] = retargetByName(clip, rigifyToUE());
-    }
+    load('hero.glb'), load('knight.glb'), load('barbarian.glb'), load('mage.glb'), load('rogue.glb'),
+  ]).then(([hero, knight, barbarian, mage, rogue]) => {
+    register('hero', hero, HERO_CLIPS, 1.8);
+    register('knight', knight, KAYKIT_CLIPS, 1.75);
+    register('barbarian', barbarian, KAYKIT_CLIPS, 1.75);
+    register('mage', mage, KAYKIT_CLIPS, 1.75);
+    register('rogue', rogue, KAYKIT_CLIPS, 1.75);
     return store;
   });
   return loadPromise;
@@ -98,18 +78,20 @@ function mount(bone, obj) {
 }
 
 export function createRiggedInstance(kind, custom) {
-  const gltf = store[kind];
-  if (!gltf) return null;
+  const entry = store[kind];
+  if (!entry) return null;
   const c = { ...defaultCustom(), ...(custom || {}) };
   const outfitColor = OUTFITS[c.outfit % OUTFITS.length];
   const skinColor = SKINS[c.skin % SKINS.length];
-
   const isHeroKind = kind === 'hero';
-  const clone = SkeletonUtils.clone(gltf.scene);
-  // the FBX-derived hero faces -z; the Blender-exported UBC models face +z
+
+  const clone = SkeletonUtils.clone(entry.gltf.scene);
+  // the FBX-derived hero faces -z; our convention is face +z
   if (isHeroKind) clone.rotation.y = Math.PI;
+  clone.scale.setScalar(entry.scale);
   const g = new THREE.Group();
   g.add(clone);
+
   const suitMat = toon(outfitColor);
   const jointMat = toon(shade(outfitColor, -0.24));
   clone.traverse((o) => {
@@ -118,19 +100,19 @@ export function createRiggedInstance(kind, custom) {
       o.frustumCulled = false; // skinned bounds are unreliable while animating
       const swap = (m) => {
         if (isHeroKind) return m.name === 'M_Joints' ? jointMat : suitMat;
-        // textured UBC models: keep the authored map, cel-shade it
+        // textured models: keep the authored atlas, cel-shade it
         return toon('#ffffff', { map: m.map || null });
       };
       o.material = Array.isArray(o.material) ? o.material.map(swap) : swap(o.material);
     }
   });
 
-  // head accessories (GLTFLoader strips dots from bone names: hand.R -> handR)
-  const headBone = clone.getObjectByName(isHeroKind ? 'DEF-head' : 'Head');
+  // head accessories (GLTFLoader strips dots from node names: hand.R -> handR)
+  const headBone = clone.getObjectByName(isHeroKind ? 'DEF-head' : 'head');
   if (headBone) {
     const acc = new THREE.Group();
     if (isHeroKind) {
-      // the mannequin gets our procedural face + hair; UBC models have real ones
+      // the mannequin gets our procedural face + hair; KayKit heads are complete
       const face = faceCap(0.13, faceTexture(skinColor), [1, 1.05, 0.95]);
       face.position.y = 0.1;
       acc.add(face);
@@ -146,29 +128,38 @@ export function createRiggedInstance(kind, custom) {
     const hat = buildHatMesh(c);
     if (hat) {
       const dress = new THREE.Group();
-      dress.scale.setScalar(isHeroKind ? 0.56 : 0.9);
-      dress.position.y = isHeroKind ? 0.1 : 0.09;
+      dress.scale.setScalar(isHeroKind ? 0.56 : 1.15);
+      dress.position.y = isHeroKind ? 0.1 : 0.16;
       dress.add(hat);
       acc.add(dress);
     }
     if (acc.children.length) mount(headBone, acc);
   }
 
-  // weapon mount on the right hand
-  const handBone = clone.getObjectByName(isHeroKind ? 'DEF-handR' : 'hand_r');
+  // KayKit models ship holding their own weapons (swords/axes) parented to
+  // the hand slots — remove them so our pickaxe/guns take their place
+  if (!isHeroKind) {
+    for (const slotName of ['handslotr', 'handslotl']) {
+      const slot = clone.getObjectByName(slotName);
+      if (slot) [...slot.children].forEach((ch) => ch.removeFromParent());
+    }
+  }
+
+  // weapon mount: KayKit rigs have a dedicated right-hand item slot
+  const handBone = clone.getObjectByName(isHeroKind ? 'DEF-handR' : 'handslotr');
   const held = new THREE.Group();
   if (handBone) {
     held.rotation.set(Math.PI / 2, 0, 0);
     held.position.set(0, 0.06, 0.02);
+    if (!isHeroKind) held.scale.setScalar(1 / entry.scale); // undo body normalization
     mount(handBone, held);
   } else {
     g.add(held);
   }
 
   const mixer = new THREE.AnimationMixer(clone);
-  const clips = isHeroKind ? store.heroClips : store.ueClips;
   const actions = {};
-  for (const [key, clip] of Object.entries(clips)) {
+  for (const [key, clip] of Object.entries(entry.clips)) {
     actions[key] = mixer.clipAction(clip);
   }
 

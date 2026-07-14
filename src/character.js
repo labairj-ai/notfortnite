@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { faceTexture } from './textures.js';
 
-export const BODIES = ['male', 'female', 'banana', 'bear', 'frog', 'robot', 'hero'];
+export const BODIES = ['male', 'female', 'banana', 'bear', 'frog', 'robot', 'hero', 'knight', 'barbarian', 'mage', 'rogue'];
 export const SKINS = ['#f2c79c', '#d9a066', '#a06a42', '#6b4226'];
 export const OUTFITS = ['#2f8fff', '#ff4757', '#2ed573', '#ffa502', '#a55eea', '#17d3c4', '#ff6b9d', '#57606f'];
 export const HATS = ['none', 'cap', 'beanie', 'crown', 'bucket'];
@@ -152,7 +152,8 @@ export function buildHatMesh(c) {
 export function buildCharacter(custom) {
   const c = { ...defaultCustom(), ...(custom || {}) };
   let body = BODIES[c.body % BODIES.length];
-  if (body === 'hero') body = 'male'; // rigged bodies are built in models.js; this is the fallback
+  // rigged bodies are built in models.js; this is the loading fallback
+  if (['hero', 'knight', 'barbarian', 'mage', 'rogue'].includes(body)) body = 'male';
   const g = new THREE.Group();
 
   // ---- shared limb factory (same pivot contract for every archetype) ----
