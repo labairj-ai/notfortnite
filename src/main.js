@@ -18,7 +18,7 @@ import { unlockAudio, sfx } from './sfx.js';
 import { createUI } from './ui.js';
 import { createSky, SUN_DIR } from './sky.js';
 import { createFX } from './fx.js';
-import { preloadModels, createRiggedInstance } from './models.js';
+import { preloadModels, createRiggedInstance, MODEL_DEFS } from './models.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
@@ -58,7 +58,7 @@ preloadModels(import.meta.env.BASE_URL).then(() => {
 }).catch((e) => console.warn('character models failed to load', e));
 
 // unified character factory: rigged GLB bodies when loaded, procedural otherwise
-const RIGGED = new Set(['hero', 'knight', 'barbarian', 'mage', 'rogue']);
+const RIGGED = new Set(Object.keys(MODEL_DEFS));
 function makeCharacter(cust) {
   const bodyKey = BODIES[(cust?.body ?? 0) % BODIES.length];
   if (RIGGED.has(bodyKey)) {
@@ -864,8 +864,8 @@ function botCustom(id) {
   let h = 7;
   for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) | 0;
   h = Math.abs(h);
-  // adventurers and heroes are common; mascots are the treat
-  const bodyPool = [7, 8, 9, 10, 6, 7, 8, 2, 9, 10, 3, 6, 4, 5, 7, 10];
+  // adventurers/skeletons/monsters are common; mascots are the treat
+  const bodyPool = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 6, 2, 3, 4, 5, 7, 9, 16];
   return {
     body: bodyPool[(h >> 13) % bodyPool.length],
     skin: h % SKINS.length,
@@ -1114,7 +1114,9 @@ function buildOptionRow(id, options, selected, noneLabel, onPick) {
   options.forEach((o, i) => {
     const b = document.createElement('button');
     b.className = 'hat-btn' + (i === selected ? ' selected' : '');
-    b.textContent = o === 'none' ? noneLabel : o[0].toUpperCase() + o.slice(1);
+    b.textContent = o === 'none'
+      ? noneLabel
+      : o.split('_').map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
     b.addEventListener('click', () => {
       onPick(i);
       wrap.querySelectorAll('.hat-btn').forEach((el, j) => el.classList.toggle('selected', j === i));

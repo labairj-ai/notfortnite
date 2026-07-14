@@ -5,7 +5,12 @@
 import * as THREE from 'three';
 import { faceTexture } from './textures.js';
 
-export const BODIES = ['male', 'female', 'banana', 'bear', 'frog', 'robot', 'hero', 'knight', 'barbarian', 'mage', 'rogue'];
+export const BODIES = [
+  'male', 'female', 'banana', 'bear', 'frog', 'robot', 'hero',
+  'knight', 'barbarian', 'mage', 'rogue',
+  'skeleton_warrior', 'skeleton_mage', 'skeleton_rogue', 'skeleton_minion',
+  'alien', 'dino', 'ghost', 'yeti',
+];
 export const SKINS = ['#f2c79c', '#d9a066', '#a06a42', '#6b4226'];
 export const OUTFITS = ['#2f8fff', '#ff4757', '#2ed573', '#ffa502', '#a55eea', '#17d3c4', '#ff6b9d', '#57606f'];
 export const HATS = ['none', 'cap', 'beanie', 'crown', 'bucket'];
@@ -153,7 +158,8 @@ export function buildCharacter(custom) {
   const c = { ...defaultCustom(), ...(custom || {}) };
   let body = BODIES[c.body % BODIES.length];
   // rigged bodies are built in models.js; this is the loading fallback
-  if (['hero', 'knight', 'barbarian', 'mage', 'rogue'].includes(body)) body = 'male';
+  const PROCEDURAL = ['male', 'female', 'banana', 'bear', 'frog', 'robot'];
+  if (!PROCEDURAL.includes(body)) body = 'male';
   const g = new THREE.Group();
 
   // ---- shared limb factory (same pivot contract for every archetype) ----

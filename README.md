@@ -103,10 +103,13 @@ Deploys to GitHub Pages automatically on every push to `main`.
 - **"Animated Base Character" 3D model and animation library by [Quaternius](https://quaternius.com)**
   ([poly.pizza/m/cwYvO5UauX](https://poly.pizza/m/cwYvO5UauX), CC-BY 3.0) — used for the
   rigged "Hero" character type (`public/models/hero.glb`)
-- **"KayKit Character Pack: Adventurers" by [Kay Lousberg](https://kaylousberg.com)**
+- **"KayKit Character Packs: Adventurers & Skeletons" by [Kay Lousberg](https://kaylousberg.com)**
   ([itch.io](https://kaylousberg.itch.io/kaykit-adventurers), CC0) — the Knight, Barbarian,
-  Mage, and Rogue character types with their baked animations
-  (`knight/barbarian/mage/rogue.glb`; unused clips stripped, textures WebP-compressed)
+  Mage, Rogue, and four Skeleton character types with their baked animations
+  (unused clips stripped, textures WebP-compressed)
+- **"Ultimate Monsters" by [Quaternius](https://quaternius.com)**
+  ([poly.pizza](https://poly.pizza/bundle/Ultimate-Monsters-Bundle-5oyGWAmOB6), CC0) —
+  the Alien, Dino, Ghost, and Yeti character types
 
 All other art is procedural.
 
