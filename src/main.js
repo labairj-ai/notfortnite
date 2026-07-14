@@ -58,7 +58,7 @@ preloadModels(import.meta.env.BASE_URL).then(() => {
 }).catch((e) => console.warn('character models failed to load', e));
 
 // unified character factory: rigged GLB bodies when loaded, procedural otherwise
-const RIGGED = new Set(['male', 'female', 'hero']);
+const RIGGED = new Set(['hero']);
 function makeCharacter(cust) {
   const bodyKey = BODIES[(cust?.body ?? 0) % BODIES.length];
   if (RIGGED.has(bodyKey)) {

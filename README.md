@@ -100,16 +100,9 @@ Deploys to GitHub Pages automatically on every push to `main`.
 
 ## Credits
 
-All rigged character models and animations by **[Quaternius](https://quaternius.com)**:
-
-- **"Animated Base Character"** ([poly.pizza/m/cwYvO5UauX](https://poly.pizza/m/cwYvO5UauX),
-  CC-BY 3.0) — the "Hero" character type and the animation clip source (`hero.glb`)
-- **"Universal Base Characters"** ([itch.io](https://quaternius.itch.io/universal-base-characters),
-  CC0) — the "Male" and "Female" character types and long hairstyle
-  (`male.glb`, `female.glb`, `hair_long.glb`; textures recompressed to WebP,
-  animations retargeted from the Rigify rig at runtime)
-
-All other art is procedural.
+- **"Animated Base Character" 3D model and animation library by [Quaternius](https://quaternius.com)**
+  ([poly.pizza/m/cwYvO5UauX](https://poly.pizza/m/cwYvO5UauX), CC-BY 3.0) — used for the
+  rigged "Hero" character type (`public/models/hero.glb`). All other art is procedural.
 
 ## v1 known limits
 

@@ -60,9 +60,9 @@ function retargetByName(clip, nameMap) {
 }
 
 const store = {
-  hero: null, male: null, female: null, hairLong: null,
+  hero: null,
   heroClips: {},         // semantic -> clip (DEF rig)
-  ueClips: {},           // semantic -> retargeted clip (UE rig)
+  ueClips: {},           // semantic -> retargeted clip (UE-style rigs)
 };
 let loadPromise = null;
 
@@ -71,14 +71,8 @@ export function preloadModels(baseUrl) {
   const loader = new GLTFLoader();
   loadPromise = Promise.all([
     loader.loadAsync(baseUrl + 'models/hero.glb'),
-    loader.loadAsync(baseUrl + 'models/male.glb').catch(() => null),
-    loader.loadAsync(baseUrl + 'models/female.glb').catch(() => null),
-    loader.loadAsync(baseUrl + 'models/hair_long.glb').catch(() => null),
-  ]).then(([hero, male, female, hairLong]) => {
+  ]).then(([hero]) => {
     store.hero = hero;
-    store.male = male;
-    store.female = female;
-    store.hairLong = hairLong;
     for (const [key, name] of Object.entries(CLIPS)) {
       const clip = hero.animations.find((a) => a.name === 'Rig|' + name);
       if (!clip) continue;
@@ -158,18 +152,6 @@ export function createRiggedInstance(kind, custom) {
       acc.add(dress);
     }
     if (acc.children.length) mount(headBone, acc);
-  }
-
-  // the female base model ships bald; give her the pack's long hairstyle
-  // ("origin at 0" mesh authored in place — attach() keeps its world pose)
-  if (kind === 'female' && store.hairLong && headBone) {
-    const hair = store.hairLong.scene.clone(true);
-    hair.traverse((o) => {
-      if (o.isMesh) o.material = toon('#ffffff', { map: o.material.map || null });
-    });
-    clone.updateMatrixWorld(true);
-    clone.add(hair);
-    headBone.attach(hair);
   }
 
   // weapon mount on the right hand
