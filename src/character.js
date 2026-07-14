@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { faceTexture } from './textures.js';
 
-export const BODIES = ['default', 'female', 'banana', 'bear', 'frog', 'robot'];
+export const BODIES = ['default', 'female', 'banana', 'bear', 'frog', 'robot', 'hero'];
 export const SKINS = ['#f2c79c', '#d9a066', '#a06a42', '#6b4226'];
 export const OUTFITS = ['#2f8fff', '#ff4757', '#2ed573', '#ffa502', '#a55eea', '#17d3c4', '#ff6b9d', '#57606f'];
 export const HATS = ['none', 'cap', 'beanie', 'crown', 'bucket'];
@@ -40,18 +40,18 @@ function ramp() {
   return gradientMap;
 }
 
-function toon(color, opts = {}) {
+export function toon(color, opts = {}) {
   return new THREE.MeshToonMaterial({ color, gradientMap: ramp(), ...opts });
 }
 
-function shade(hex, amt) {
+export function shade(hex, amt) {
   const c = new THREE.Color(hex);
   c.offsetHSL(0, 0.02, amt);
   return c;
 }
 
 // curved face patch that hugs a sphere of the given radius, facing +z
-function faceCap(radius, tex, headScale = [0.95, 1.08, 0.92]) {
+export function faceCap(radius, tex, headScale = [0.95, 1.08, 0.92]) {
   const geo = new THREE.SphereGeometry(radius, 16, 12, -Math.PI / 3.2, (Math.PI / 3.2) * 2, Math.PI / 3.4, Math.PI / 2.4);
   const mesh = new THREE.Mesh(geo, new THREE.MeshToonMaterial({
     map: tex, gradientMap: ramp(), transparent: true,
@@ -61,9 +61,98 @@ function faceCap(radius, tex, headScale = [0.95, 1.08, 0.92]) {
   return mesh;
 }
 
+// hair mesh sized for a ~0.25-radius head centered at the origin
+export function buildHairMesh(c) {
+  const hairKey = HAIRS[c.hair % HAIRS.length];
+  if (hairKey === 'none') return null;
+  const hairMat = toon(HAIR_COLORS[c.hairColor % HAIR_COLORS.length]);
+  const hair = new THREE.Group();
+  const cap = new THREE.Mesh(
+    new THREE.SphereGeometry(0.255, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2.35), hairMat);
+  cap.scale.set(0.98, 1.05, 0.95);
+  hair.add(cap);
+  if (hairKey === 'spiky') {
+    for (let i = 0; i < 7; i++) {
+      const spike = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.16, 5), hairMat);
+      const a = (i / 7) * Math.PI * 2;
+      spike.position.set(Math.cos(a) * 0.13, 0.24, Math.sin(a) * 0.11);
+      spike.rotation.set(Math.sin(a) * 0.5, 0, -Math.cos(a) * 0.5);
+      hair.add(spike);
+    }
+    const top = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.2, 5), hairMat);
+    top.position.y = 0.28;
+    hair.add(top);
+  } else if (hairKey === 'swoop') {
+    const fringe = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), hairMat);
+    fringe.scale.set(1.3, 0.55, 0.8);
+    fringe.position.set(0.06, 0.13, 0.17);
+    fringe.rotation.z = -0.35;
+    hair.add(fringe);
+  } else if (hairKey === 'ponytail') {
+    const bun = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 7), hairMat);
+    bun.position.set(0, 0.16, -0.2);
+    const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.02, 0.34, 7), hairMat);
+    tail.position.set(0, -0.02, -0.26);
+    tail.rotation.x = 0.35;
+    hair.add(bun, tail);
+  } else if (hairKey === 'long') {
+    const back = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.16, 0.42, 12, 1, false, -Math.PI / 2, Math.PI), hairMat);
+    back.position.set(0, -0.12, -0.06);
+    back.rotation.y = Math.PI;
+    hair.add(back);
+  }
+  hair.position.y = 0.055;
+  return hair;
+}
+
+// hat mesh sized for a ~0.25-radius head centered at the origin
+export function buildHatMesh(c) {
+  const hatKey = HATS[c.hat % HATS.length];
+  if (hatKey === 'none') return null;
+  const outfitColor = OUTFITS[c.outfit % OUTFITS.length];
+  const outfit = toon(outfitColor);
+  const outfitDark = toon(shade(outfitColor, -0.16));
+  let hat;
+  if (hatKey === 'cap') {
+    hat = new THREE.Group();
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2.1), outfit);
+    dome.scale.set(1, 0.75, 1);
+    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.22, 0.035, 10, 1, false, -Math.PI / 2.4, Math.PI / 1.2), outfitDark);
+    brim.position.set(0, 0.02, 0.16);
+    brim.scale.z = 1.6;
+    hat.add(dome, brim);
+    hat.position.y = 0.12;
+  } else if (hatKey === 'beanie') {
+    hat = new THREE.Group();
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.25, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), toon('#ff4757'));
+    dome.scale.y = 0.85;
+    const fold = new THREE.Mesh(new THREE.CylinderGeometry(0.255, 0.255, 0.09, 12), toon('#d63447'));
+    fold.position.y = -0.02;
+    const pom = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), toon('#ffffff'));
+    pom.position.y = 0.24;
+    hat.add(dome, fold, pom);
+    hat.position.y = 0.1;
+  } else if (hatKey === 'crown') {
+    hat = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.15, 0.18, 0.14, 6, 1, true),
+      new THREE.MeshToonMaterial({ color: '#ffd700', gradientMap: ramp(), emissive: '#7a5c00', side: THREE.DoubleSide }),
+    );
+    hat.position.y = 0.24;
+  } else { // bucket
+    hat = new THREE.Group();
+    const top = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.21, 0.14, 12), toon('#5b7042'));
+    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.32, 0.04, 12), toon('#4c5e37'));
+    brim.position.y = -0.07;
+    hat.add(top, brim);
+    hat.position.y = 0.19;
+  }
+  return hat;
+}
+
 export function buildCharacter(custom) {
   const c = { ...defaultCustom(), ...(custom || {}) };
-  const body = BODIES[c.body % BODIES.length];
+  let body = BODIES[c.body % BODIES.length];
+  if (body === 'hero') body = 'default'; // rigged hero is built in models.js; this is the fallback
   const g = new THREE.Group();
 
   // ---- shared limb factory (same pivot contract for every archetype) ----
@@ -120,13 +209,11 @@ export function buildCharacter(custom) {
     const female = body === 'female';
     const skinColor = SKINS[c.skin % SKINS.length];
     const outfitColor = OUTFITS[c.outfit % OUTFITS.length];
-    const hairColor = HAIR_COLORS[c.hairColor % HAIR_COLORS.length];
     const skin = toon(skinColor);
     const outfit = toon(outfitColor);
     const outfitDark = toon(shade(outfitColor, -0.16));
     const pants = toon('#333748');
     const shoes = toon('#1e2029');
-    const hairMat = toon(hairColor);
 
     const hips = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 10), pants);
     hips.scale.set(female ? 1.2 : 1.15, 0.7, 0.85);
@@ -168,87 +255,10 @@ export function buildCharacter(custom) {
     cast.push(head);
     headG.add(faceCap(0.245, faceTexture(skinColor, female ? 'female' : 'default')));
 
-    // hair
-    const hairKey = HAIRS[c.hair % HAIRS.length];
-    if (hairKey !== 'none') {
-      const hair = new THREE.Group();
-      const cap = new THREE.Mesh(
-        new THREE.SphereGeometry(0.255, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2.35), hairMat);
-      cap.scale.set(0.98, 1.05, 0.95);
-      hair.add(cap);
-      if (hairKey === 'spiky') {
-        for (let i = 0; i < 7; i++) {
-          const spike = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.16, 5), hairMat);
-          const a = (i / 7) * Math.PI * 2;
-          spike.position.set(Math.cos(a) * 0.13, 0.24, Math.sin(a) * 0.11);
-          spike.rotation.set(Math.sin(a) * 0.5, 0, -Math.cos(a) * 0.5);
-          hair.add(spike);
-        }
-        const top = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.2, 5), hairMat);
-        top.position.y = 0.28;
-        hair.add(top);
-      } else if (hairKey === 'swoop') {
-        const fringe = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), hairMat);
-        fringe.scale.set(1.3, 0.55, 0.8);
-        fringe.position.set(0.06, 0.13, 0.17);
-        fringe.rotation.z = -0.35;
-        hair.add(fringe);
-      } else if (hairKey === 'ponytail') {
-        const bun = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 7), hairMat);
-        bun.position.set(0, 0.16, -0.2);
-        const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.02, 0.34, 7), hairMat);
-        tail.position.set(0, -0.02, -0.26);
-        tail.rotation.x = 0.35;
-        hair.add(bun, tail);
-      } else if (hairKey === 'long') {
-        const back = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.16, 0.42, 12, 1, false, -Math.PI / 2, Math.PI), hairMat);
-        back.position.set(0, -0.12, -0.06);
-        back.rotation.y = Math.PI;
-        hair.add(back);
-      }
-      hair.position.y = 0.055;
-      headG.add(hair);
-    }
-
-    // hats
-    const hatKey = HATS[c.hat % HATS.length];
-    if (hatKey !== 'none') {
-      let hat;
-      if (hatKey === 'cap') {
-        hat = new THREE.Group();
-        const dome = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2.1), outfit);
-        dome.scale.set(1, 0.75, 1);
-        const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.22, 0.035, 10, 1, false, -Math.PI / 2.4, Math.PI / 1.2), outfitDark);
-        brim.position.set(0, 0.02, 0.16);
-        brim.scale.z = 1.6;
-        hat.add(dome, brim);
-        hat.position.y = 0.12;
-      } else if (hatKey === 'beanie') {
-        hat = new THREE.Group();
-        const dome = new THREE.Mesh(new THREE.SphereGeometry(0.25, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), toon('#ff4757'));
-        dome.scale.y = 0.85;
-        const fold = new THREE.Mesh(new THREE.CylinderGeometry(0.255, 0.255, 0.09, 12), toon('#d63447'));
-        fold.position.y = -0.02;
-        const pom = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), toon('#ffffff'));
-        pom.position.y = 0.24;
-        hat.add(dome, fold, pom);
-        hat.position.y = 0.1;
-      } else if (hatKey === 'crown') {
-        hat = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.15, 0.18, 0.14, 6, 1, true),
-          new THREE.MeshToonMaterial({ color: '#ffd700', gradientMap: ramp(), emissive: '#7a5c00', side: THREE.DoubleSide }),
-        );
-        hat.position.y = 0.24;
-      } else {
-        hat = new THREE.Group();
-        const top = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.21, 0.14, 12), toon('#5b7042'));
-        const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.32, 0.04, 12), toon('#4c5e37'));
-        brim.position.y = -0.07;
-        hat.add(top, brim);
-        hat.position.y = 0.19;
-      }
-      headG.add(hat);
-    }
+    const hair = buildHairMesh(c);
+    if (hair) headG.add(hair);
+    const hat = buildHatMesh(c);
+    if (hat) headG.add(hat);
 
     armL = makeArm(-1, { x: female ? 0.3 : 0.33, y: 1.5, thick: female ? 0.065 : 0.075, sleeve: outfit, fore: skin, hand: skin, pad: outfitDark, padR: female ? 0.09 : 0.11 });
     armR = makeArm(1, { x: female ? 0.3 : 0.33, y: 1.5, thick: female ? 0.065 : 0.075, sleeve: outfit, fore: skin, hand: skin, pad: outfitDark, padR: female ? 0.09 : 0.11 });
@@ -518,8 +528,31 @@ export function setHeldItem(charGroup, weaponKey) {
   u.held.add(grp);
 }
 
-export function animateCharacter(charGroup, dt, moving, shooting) {
+export function animateCharacter(charGroup, dt, moving, shooting, airborne) {
   const u = charGroup.userData;
+
+  // rigged hero: drive the skeletal animation state machine
+  if (u.isHero) {
+    u.mixer.update(dt);
+    const target =
+      u.override ? u.override :
+      shooting ? 'Pistol_Shoot' :
+      airborne ? 'Jump_Loop' :
+      moving ? 'Jog_Fwd_Loop' : 'Idle_Loop';
+    if (target !== u.current && u.actions[target]) {
+      const prev = u.actions[u.current];
+      const next = u.actions[target];
+      if (prev) prev.fadeOut(0.18);
+      next.reset().fadeIn(0.18).play();
+      if (target === 'Death01') {
+        next.setLoop(THREE.LoopOnce, 1);
+        next.clampWhenFinished = true;
+      }
+      u.current = target;
+    }
+    return;
+  }
+
   u.phase += dt * (moving ? 9.5 : 1.6);
   const s = Math.sin(u.phase);
   if (moving) {

@@ -98,6 +98,12 @@ cd server && npm start   # optional: local multiplayer on ws://localhost:8081
 
 Deploys to GitHub Pages automatically on every push to `main`.
 
+## Credits
+
+- **"Animated Base Character" 3D model and animation library by [Quaternius](https://quaternius.com)**
+  ([poly.pizza/m/cwYvO5UauX](https://poly.pizza/m/cwYvO5UauX), CC-BY 3.0) — used for the
+  rigged "Hero" character type (`public/models/hero.glb`). All other art is procedural.
+
 ## v1 known limits
 
 - Hits are adjudicated by the shooter's client (fine for a friendly private server,

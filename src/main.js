@@ -18,6 +18,7 @@ import { unlockAudio, sfx } from './sfx.js';
 import { createUI } from './ui.js';
 import { createSky, SUN_DIR } from './sky.js';
 import { createFX } from './fx.js';
+import { preloadHero, createHeroInstance } from './models.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
@@ -48,6 +49,23 @@ let custom = loadCustom();
 
 if (typeof __BUILD_TIME__ !== 'undefined') {
   $('build-time').textContent = 'Build: ' + __BUILD_TIME__;
+}
+
+// rigged hero model loads in the background; characters fall back to the
+// procedural default body until it's ready
+preloadHero(import.meta.env.BASE_URL + 'models/hero.glb').then(() => {
+  if (!$('custom-screen').classList.contains('hidden')) refreshPreview();
+}).catch((e) => console.warn('hero model failed to load', e));
+
+// unified character factory: rigged hero when selected and loaded,
+// procedural bodies otherwise
+function makeCharacter(cust) {
+  const bodyKey = BODIES[(cust?.body ?? 0) % BODIES.length];
+  if (bodyKey === 'hero') {
+    const hero = createHeroInstance(cust);
+    if (hero) return hero;
+  }
+  return buildCharacter(cust);
 }
 document.body.classList.toggle('touch', IS_TOUCH);
 
@@ -343,9 +361,15 @@ function handleEvent(ev) {
         if (victim) S.fx.killBurst(victim.x, victim.y, victim.z);
       }
       if (meVictim) { S.killedBy = ev.killerName; onLocalDeath(); }
-      // remove victim's character mesh after a beat
+      // rigged characters play their death animation before fading out
       const e = S.entities.get(ev.victim);
-      if (e) setTimeout(() => { if (S && S.entities.get(ev.victim) === e) { S.scene.remove(e.char); S.entities.delete(ev.victim); } }, 1200);
+      if (e) {
+        const isHero = e.char.userData.isHero;
+        if (isHero) e.char.userData.override = 'Death01';
+        setTimeout(() => {
+          if (S && S.entities.get(ev.victim) === e) { S.scene.remove(e.char); S.entities.delete(ev.victim); }
+        }, isHero ? 2400 : 1200);
+      }
       break;
     }
     case 'shot': {
@@ -373,6 +397,7 @@ function handleEvent(ev) {
     case 'end': {
       S.ended = true;
       const won = ev.winner === S.myId;
+      if (won && myChar && myChar.userData.isHero) myChar.userData.override = 'Dance_Loop';
       setTimeout(() => {
         if (!S) return;
         if (won) { sfx.win(); ui.showEnd(true, 1, S.me.kills); }
@@ -839,7 +864,7 @@ function botCustom(id) {
   let h = 7;
   for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) | 0;
   h = Math.abs(h);
-  const bodyPool = [0, 0, 1, 1, 0, 2, 3, 1, 4, 5];
+  const bodyPool = [6, 6, 6, 1, 6, 2, 3, 6, 4, 5, 0, 6]; // mostly rigged heroes, some mascots
   return {
     body: bodyPool[(h >> 13) % bodyPool.length],
     skin: h % SKINS.length,
@@ -854,7 +879,7 @@ function syncEntities(players) {
   for (const p of players) {
     if (p.id === S.myId) continue;
     if (!S.entities.has(p.id) && p.alive) {
-      const char = buildCharacter(p.custom || botCustom(p.id));
+      const char = makeCharacter(p.custom || botCustom(p.id));
       char.add(makeNameTag(p.name, p.isBot));
       S.scene.add(char);
       S.entities.set(p.id, { char, tx: p.x, ty: p.y, tz: p.z, tyaw: p.yaw, shootT: 0 });
@@ -870,7 +895,7 @@ function updateEntities(dt) {
     if (p.id === S.myId) continue;
     const e = S.entities.get(p.id);
     if (!e) continue;
-    if (!p.alive) continue;
+    if (!p.alive) { animateCharacter(e.char, dt, false, false); continue; } // finish death anim
     e.char.position.x += (p.x - e.char.position.x) * lerp;
     e.char.position.y += (p.y - e.char.position.y) * lerp;
     e.char.position.z += (p.z - e.char.position.z) * lerp;
@@ -915,6 +940,7 @@ function loop(now) {
   const dt = Math.min(0.05, (now - lastT) / 1000);
   lastT = now;
   if (!S || S.state !== 'playing') return;
+  if (import.meta.env.DEV) { window.__S = S; window.__myChar = myChar; }
 
   ctl.update();
   updateLocalPlayer(dt);
@@ -941,7 +967,7 @@ function loop(now) {
 
   // my own character mesh
   if (!myChar) {
-    myChar = buildCharacter(custom);
+    myChar = makeCharacter(custom);
     S.scene.add(myChar);
   }
   myChar.position.set(S.me.x, S.me.y, S.me.z);
@@ -949,7 +975,8 @@ function loop(now) {
 
   myChar.visible = S.me.alive;
   setHeldItem(myChar, S.me.weapon);
-  animateCharacter(myChar, dt, (S.me.anim & 1) !== 0, (S.me.anim & 2) !== 0);
+  animateCharacter(myChar, dt, (S.me.anim & 1) !== 0, (S.me.anim & 2) !== 0,
+    S.phys.gliding || !S.phys.grounded);
 
   updateEntities(dt);
   updateTracers(dt);
@@ -1052,7 +1079,7 @@ function initPreview() {
 function refreshPreview() {
   const p = initPreview();
   if (p.char) p.scene.remove(p.char);
-  p.char = buildCharacter(custom);
+  p.char = makeCharacter(custom);
   p.scene.add(p.char);
 }
 
