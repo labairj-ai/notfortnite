@@ -16,10 +16,12 @@ import { faceTexture } from './textures.js';
 const HERO_CLIPS = {
   idle: ['Rig|Idle_Loop'], run: ['Rig|Jog_Fwd_Loop'], air: ['Rig|Jump_Loop'],
   shoot: ['Rig|Pistol_Shoot'], death: ['Rig|Death01'], dance: ['Rig|Dance_Loop'],
+  gunidle: ['Rig|Pistol_Aim_Neutral'],
 };
 const KAYKIT_CLIPS = {
   idle: ['Idle'], run: ['Running_A'], air: ['Jump_Idle'],
   shoot: ['1H_Ranged_Shooting'], death: ['Death_A'], dance: ['Cheer'],
+  gunidle: ['1H_Ranged_Shooting'],
 };
 // monsters vary: ghosts fly, aliens bite — resolve by suffix after the '|'
 const MONSTER_CLIPS = {
@@ -39,6 +41,9 @@ const kaykit = (file) => ({
 const monster = (file, height = 1.6) => ({
   file, height, clips: MONSTER_CLIPS,
   hand: ['HandR', 'Hand1R', 'LowerArmR'], head: ['Head'], dressScale: 1.2, dressY: 0.1,
+  // monster hand bones run opposite to humanoid rigs: the default mount points
+  // guns backward over the shoulder; identity keeps them horizontal and visible
+  heldRot: [0, 0, 0],
 });
 
 export const MODEL_DEFS = {
@@ -197,7 +202,7 @@ export function createRiggedInstance(kind, custom) {
   const handBone = findBone(clone, def.hand);
   const held = new THREE.Group();
   if (handBone) {
-    held.rotation.set(Math.PI / 2, 0, 0);
+    held.rotation.set(...(def.heldRot || [Math.PI / 2, 0, 0]));
     held.position.set(0, 0.06, 0.02);
     if (!def.heroStyle) held.scale.setScalar(1 / entry.scale); // undo normalization
     mount(handBone, held);

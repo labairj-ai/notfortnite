@@ -537,6 +537,7 @@ export function setHeldItem(charGroup, weaponKey) {
 
 export function animateCharacter(charGroup, dt, moving, shooting, airborne) {
   const u = charGroup.userData;
+  const hasGun = !!u.heldKey && u.heldKey !== 'pickaxe';
 
   // rigged characters: drive the skeletal animation state machine
   if (u.isHero) {
@@ -545,7 +546,8 @@ export function animateCharacter(charGroup, dt, moving, shooting, airborne) {
       u.override ? u.override :
       shooting ? 'shoot' :
       airborne ? 'air' :
-      moving ? 'run' : 'idle';
+      moving ? 'run' :
+      hasGun && u.actions.gunidle ? 'gunidle' : 'idle';
     if (target !== u.current && u.actions[target]) {
       const prev = u.actions[u.current];
       const next = u.actions[target];
@@ -569,7 +571,7 @@ export function animateCharacter(charGroup, dt, moving, shooting, airborne) {
     u.legR.knee.rotation.x = Math.max(0, s) * 0.9 + 0.08;
     u.armL.shoulder.rotation.x = -s * 0.5;
     u.armL.elbow.rotation.x = -0.3 - Math.max(0, -s) * 0.4;
-    if (!shooting) {
+    if (!shooting && !hasGun) {
       u.armR.shoulder.rotation.x = s * 0.5;
       u.armR.elbow.rotation.x = -0.3 - Math.max(0, s) * 0.4;
     }
@@ -580,7 +582,7 @@ export function animateCharacter(charGroup, dt, moving, shooting, airborne) {
     u.legR.knee.rotation.x = 0.05;
     u.armL.shoulder.rotation.x = s * 0.045;
     u.armL.elbow.rotation.x = -0.25;
-    if (!shooting) {
+    if (!shooting && !hasGun) {
       u.armR.shoulder.rotation.x = -s * 0.045;
       u.armR.elbow.rotation.x = -0.25;
     }
@@ -588,6 +590,10 @@ export function animateCharacter(charGroup, dt, moving, shooting, airborne) {
   if (shooting) {
     u.armR.shoulder.rotation.x = -1.35;
     u.armR.elbow.rotation.x = -0.12;
+  } else if (hasGun) {
+    // low-ready carry: gun raised and angled forward so it reads at a glance
+    u.armR.shoulder.rotation.x = -0.85 + s * 0.04;
+    u.armR.elbow.rotation.x = -0.35;
   }
 }
 
