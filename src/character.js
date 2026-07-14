@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { faceTexture } from './textures.js';
 
-export const BODIES = ['default', 'female', 'banana', 'bear', 'frog', 'robot', 'hero'];
+export const BODIES = ['male', 'female', 'banana', 'bear', 'frog', 'robot', 'hero'];
 export const SKINS = ['#f2c79c', '#d9a066', '#a06a42', '#6b4226'];
 export const OUTFITS = ['#2f8fff', '#ff4757', '#2ed573', '#ffa502', '#a55eea', '#17d3c4', '#ff6b9d', '#57606f'];
 export const HATS = ['none', 'cap', 'beanie', 'crown', 'bucket'];
@@ -152,7 +152,7 @@ export function buildHatMesh(c) {
 export function buildCharacter(custom) {
   const c = { ...defaultCustom(), ...(custom || {}) };
   let body = BODIES[c.body % BODIES.length];
-  if (body === 'hero') body = 'default'; // rigged hero is built in models.js; this is the fallback
+  if (body === 'hero') body = 'male'; // rigged bodies are built in models.js; this is the fallback
   const g = new THREE.Group();
 
   // ---- shared limb factory (same pivot contract for every archetype) ----
@@ -205,7 +205,7 @@ export function buildCharacter(custom) {
   const cast = [];
 
   // =========================================================================
-  if (body === 'default' || body === 'female') {
+  if (body === 'male' || body === 'female') {
     const female = body === 'female';
     const skinColor = SKINS[c.skin % SKINS.length];
     const outfitColor = OUTFITS[c.outfit % OUTFITS.length];
@@ -531,20 +531,20 @@ export function setHeldItem(charGroup, weaponKey) {
 export function animateCharacter(charGroup, dt, moving, shooting, airborne) {
   const u = charGroup.userData;
 
-  // rigged hero: drive the skeletal animation state machine
+  // rigged characters: drive the skeletal animation state machine
   if (u.isHero) {
     u.mixer.update(dt);
     const target =
       u.override ? u.override :
-      shooting ? 'Pistol_Shoot' :
-      airborne ? 'Jump_Loop' :
-      moving ? 'Jog_Fwd_Loop' : 'Idle_Loop';
+      shooting ? 'shoot' :
+      airborne ? 'air' :
+      moving ? 'run' : 'idle';
     if (target !== u.current && u.actions[target]) {
       const prev = u.actions[u.current];
       const next = u.actions[target];
       if (prev) prev.fadeOut(0.18);
       next.reset().fadeIn(0.18).play();
-      if (target === 'Death01') {
+      if (target === 'death') {
         next.setLoop(THREE.LoopOnce, 1);
         next.clampWhenFinished = true;
       }

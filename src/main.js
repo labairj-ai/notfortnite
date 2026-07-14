@@ -18,7 +18,7 @@ import { unlockAudio, sfx } from './sfx.js';
 import { createUI } from './ui.js';
 import { createSky, SUN_DIR } from './sky.js';
 import { createFX } from './fx.js';
-import { preloadHero, createHeroInstance } from './models.js';
+import { preloadModels, createRiggedInstance } from './models.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
@@ -51,19 +51,19 @@ if (typeof __BUILD_TIME__ !== 'undefined') {
   $('build-time').textContent = 'Build: ' + __BUILD_TIME__;
 }
 
-// rigged hero model loads in the background; characters fall back to the
-// procedural default body until it's ready
-preloadHero(import.meta.env.BASE_URL + 'models/hero.glb').then(() => {
+// rigged models load in the background; characters fall back to the
+// procedural bodies until they're ready
+preloadModels(import.meta.env.BASE_URL).then(() => {
   if (!$('custom-screen').classList.contains('hidden')) refreshPreview();
-}).catch((e) => console.warn('hero model failed to load', e));
+}).catch((e) => console.warn('character models failed to load', e));
 
-// unified character factory: rigged hero when selected and loaded,
-// procedural bodies otherwise
+// unified character factory: rigged GLB bodies when loaded, procedural otherwise
+const RIGGED = new Set(['male', 'female', 'hero']);
 function makeCharacter(cust) {
   const bodyKey = BODIES[(cust?.body ?? 0) % BODIES.length];
-  if (bodyKey === 'hero') {
-    const hero = createHeroInstance(cust);
-    if (hero) return hero;
+  if (RIGGED.has(bodyKey)) {
+    const rigged = createRiggedInstance(bodyKey, cust);
+    if (rigged) return rigged;
   }
   return buildCharacter(cust);
 }
@@ -365,7 +365,7 @@ function handleEvent(ev) {
       const e = S.entities.get(ev.victim);
       if (e) {
         const isHero = e.char.userData.isHero;
-        if (isHero) e.char.userData.override = 'Death01';
+        if (isHero) e.char.userData.override = 'death';
         setTimeout(() => {
           if (S && S.entities.get(ev.victim) === e) { S.scene.remove(e.char); S.entities.delete(ev.victim); }
         }, isHero ? 2400 : 1200);
@@ -397,7 +397,7 @@ function handleEvent(ev) {
     case 'end': {
       S.ended = true;
       const won = ev.winner === S.myId;
-      if (won && myChar && myChar.userData.isHero) myChar.userData.override = 'Dance_Loop';
+      if (won && myChar && myChar.userData.isHero) myChar.userData.override = 'dance';
       setTimeout(() => {
         if (!S) return;
         if (won) { sfx.win(); ui.showEnd(true, 1, S.me.kills); }
