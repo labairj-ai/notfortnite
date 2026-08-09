@@ -16,6 +16,8 @@ export function createControls(canvas) {
     slotPressed: -1,              // 0-5, -1 none
     piecePressed: null,           // 'wall'|'floor'|'ramp'
     matCyclePressed: false,
+    emoteWheelPressed: false,
+    emoteSelected: -1,            // 0-5, -1 none
     enabled: false,
   };
 
@@ -29,6 +31,7 @@ export function createControls(canvas) {
     if (e.code === 'KeyF') ctl.interactPressed = true;
     if (e.code === 'KeyQ') ctl.buildTogglePressed = true;
     if (e.code === 'KeyR') ctl.matCyclePressed = true;
+    if (e.code === 'KeyE') ctl.emoteWheelPressed = true;
     if (e.code === 'KeyZ') ctl.piecePressed = 'wall';
     if (e.code === 'KeyX') ctl.piecePressed = 'floor';
     if (e.code === 'KeyC') ctl.piecePressed = 'ramp';
@@ -86,6 +89,7 @@ export function createControls(canvas) {
     bindButton('btn-piece-floor', () => { ctl.piecePressed = 'floor'; });
     bindButton('btn-piece-ramp', () => { ctl.piecePressed = 'ramp'; });
     bindButton('btn-mat', () => { ctl.matCyclePressed = true; });
+    bindButton('btn-emote', () => { ctl.emoteWheelPressed = true; });
     for (let i = 0; i < 6; i++) {
       bindButton('hud-slot-' + i, () => { ctl.slotPressed = i; });
     }
@@ -156,6 +160,8 @@ export function createControls(canvas) {
     ctl.slotPressed = -1;
     ctl.piecePressed = null;
     ctl.matCyclePressed = false;
+    ctl.emoteWheelPressed = false;
+    ctl.emoteSelected = -1;
   };
 
   return ctl;

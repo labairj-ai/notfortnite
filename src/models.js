@@ -17,11 +17,15 @@ const HERO_CLIPS = {
   idle: ['Rig|Idle_Loop'], run: ['Rig|Jog_Fwd_Loop'], air: ['Rig|Jump_Loop'],
   shoot: ['Rig|Pistol_Shoot'], death: ['Rig|Death01'], dance: ['Rig|Dance_Loop'],
   gunidle: ['Rig|Pistol_Aim_Neutral'],
+  emote0: ['Rig|Dance_Loop'], emote1: ['Rig|Dance_Loop'], emote2: ['Rig|Dance_Loop'],
+  emote3: ['Rig|Dance_Loop'], emote4: ['Rig|Dance_Loop'], emote5: ['Rig|Dance_Loop'],
 };
 const KAYKIT_CLIPS = {
   idle: ['Idle'], run: ['Running_A'], air: ['Jump_Idle'],
   shoot: ['1H_Ranged_Shooting'], death: ['Death_A'], dance: ['Cheer'],
   gunidle: ['1H_Ranged_Shooting'],
+  emote0: ['Cheer'], emote1: ['Wave', 'Cheer'], emote2: ['Yes', 'Cheer'],
+  emote3: ['Cheer'], emote4: ['Cheer'], emote5: ['Cheer'],
 };
 // monsters vary: ghosts fly, aliens bite — resolve by suffix after the '|'
 const MONSTER_CLIPS = {
@@ -31,6 +35,9 @@ const MONSTER_CLIPS = {
   shoot: ['Shoot', 'Punch', 'Bite_Front', 'Headbutt'],
   death: ['Death'],
   dance: ['Dance', 'Wave', 'Yes'],
+  emote0: ['Dance', 'Wave', 'Yes'], emote1: ['Wave', 'Dance', 'Yes'],
+  emote2: ['Yes', 'Dance', 'Wave'], emote3: ['Dance', 'Yes', 'Wave'],
+  emote4: ['Wave', 'Yes', 'Dance'], emote5: ['Yes', 'Wave', 'Dance'],
 };
 
 const kaykit = (file) => ({

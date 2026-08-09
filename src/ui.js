@@ -161,6 +161,53 @@ export function createUI() {
 
   ui.setLobbyStatus = (text) => { $('lobby-status').textContent = text; };
 
+  // ---- emote wheel --------------------------------------------------------
+  let emoteWheelEl = null;
+
+  ui.initEmoteWheel = (emotes, onSelect) => {
+    const overlay = document.createElement('div');
+    overlay.id = 'emote-wheel';
+    overlay.className = 'hidden';
+
+    const inner = document.createElement('div');
+    inner.className = 'emote-wheel-inner';
+
+    const center = document.createElement('div');
+    center.className = 'emote-center';
+    center.textContent = 'EMOTES';
+    inner.appendChild(center);
+
+    const R = 115, SIZE = 88, CX = 160, CY = 160;
+    emotes.forEach((e, i) => {
+      const slot = document.createElement('div');
+      slot.className = 'emote-slot';
+      const angle = (i * 60 - 90) * Math.PI / 180;
+      slot.style.left = (CX + R * Math.cos(angle) - SIZE / 2) + 'px';
+      slot.style.top  = (CY + R * Math.sin(angle) - SIZE / 2) + 'px';
+      slot.innerHTML = `<span class="emote-emoji">${e.emoji}</span><span class="emote-name">${e.label}</span>`;
+      const pick = (ev) => { ev.stopPropagation(); ui.showEmoteWheel(false); onSelect(i); };
+      slot.addEventListener('click', pick);
+      slot.addEventListener('touchstart', (ev) => { ev.preventDefault(); pick(ev); }, { passive: false });
+      inner.appendChild(slot);
+    });
+
+    overlay.appendChild(inner);
+    overlay.addEventListener('click', () => { ui.showEmoteWheel(false); onSelect(-1); });
+    document.body.appendChild(overlay);
+    emoteWheelEl = overlay;
+  };
+
+  ui.showEmoteWheel = (visible) => {
+    if (emoteWheelEl) emoteWheelEl.classList.toggle('hidden', !visible);
+  };
+
+  ui.showEmoteLabel = (label) => {
+    const el = $('emote-label');
+    if (!el) return;
+    if (label) { el.textContent = label; el.classList.remove('hidden'); }
+    else el.classList.add('hidden');
+  };
+
   return ui;
 }
 

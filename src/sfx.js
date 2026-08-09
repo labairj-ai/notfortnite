@@ -56,4 +56,5 @@ export const sfx = {
   storm() { blip(110, 0.6, 'sawtooth', 0.08, -30); },
   win() { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => blip(f, 0.3, 'sine', 0.14), i * 140)); },
   lose() { [330, 262, 196].forEach((f, i) => setTimeout(() => blip(f, 0.35, 'sawtooth', 0.1), i * 180)); },
+  emote() { [523, 659, 784].forEach((f, i) => setTimeout(() => blip(f, 0.14, 'sine', 0.11, 40), i * 90)); },
 };

@@ -9,7 +9,7 @@ import {
 } from '../shared/match.js';
 import {
   buildCharacter, animateCharacter, setHeldItem, makeNameTag,
-  BODIES, SKINS, OUTFITS, HATS, HAIRS, HAIR_COLORS, loadCustom, saveCustom,
+  BODIES, SKINS, OUTFITS, HATS, HAIRS, HAIR_COLORS, EMOTES, loadCustom, saveCustom,
 } from './character.js';
 import { createControls, IS_TOUCH } from './controls.js';
 import { createWorldView, supportHeight, resolveWalls, raycastWorld, raySphere } from './world.js';
@@ -46,6 +46,8 @@ const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerH
 const ui = createUI();
 const ctl = createControls(canvas);
 let custom = loadCustom();
+
+ui.initEmoteWheel(EMOTES, (i) => { ctl.emoteSelected = i; });
 
 if (typeof __BUILD_TIME__ !== 'undefined') {
   $('build-time').textContent = 'Build: ' + __BUILD_TIME__;
@@ -150,6 +152,8 @@ function createSession(seed, mode) {
     killedBy: 'The Storm',
     ended: false,
     openedChests: new Set(),
+    emoting: false,
+    emoteWheelOpen: false,
   };
 }
 
@@ -343,6 +347,7 @@ function handleEvent(ev) {
         else { S.me.hp = ev.hp; S.me.shield = ev.shield; }
         ui.damageFlash();
         sfx.hurt();
+        cancelEmote();
       } else if (ev.by === S.myId) {
         ui.hitmarker();
         sfx.hit();
@@ -417,6 +422,8 @@ function handleEvent(ev) {
 function onLocalDeath() {
   if (!S || S.deathShown) return;
   S.deathShown = true;
+  cancelEmote();
+  ui.showEmoteWheel(false);
   sfx.lose();
   setTimeout(() => {
     if (!S) return;
@@ -511,6 +518,15 @@ function updateLocalPlayer(dt) {
   me.x = fixed.x; me.z = fixed.z;
 
   me.anim = (vlen > 0.1 ? 1 : 0) | (S.fireCd > (activeWeaponDef()?.rate || 1) - 0.15 ? 2 : 0);
+
+  // emote wheel
+  if (ctl.emoteWheelPressed) toggleEmoteWheel();
+  if (ctl.emoteSelected >= 0) {
+    playEmote(ctl.emoteSelected);
+    S.emoteWheelOpen = false;
+    if (!IS_TOUCH) canvas.requestPointerLock();
+  }
+  if (S.emoting && vlen > 0.1) cancelEmote();
 
   // actions
   if (ctl.slotPressed >= 0) selectSlot(ctl.slotPressed);
@@ -677,6 +693,53 @@ function useHeal(item) {
 }
 
 // --- building ----------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Emotes
+// ---------------------------------------------------------------------------
+function playEmote(i) {
+  if (!myChar || !S || !S.me.alive || S.ended) return;
+  const u = myChar.userData;
+  if (u.isHero) {
+    const key = `emote${i}`;
+    u.override = u.actions?.[key] ? key : (u.actions?.dance ? 'dance' : null);
+  }
+  u.emoteIndex = i;
+  S.emoting = true;
+  ui.showEmoteLabel(EMOTES[i].label);
+  sfx.emote();
+  ui.killfeed(`${custom.name || 'Player'} is doing the ${EMOTES[i].label}!`, true);
+}
+
+function cancelEmote() {
+  if (!S) return;
+  if (S.emoteWheelOpen) { S.emoteWheelOpen = false; ui.showEmoteWheel(false); }
+  if (!S.emoting) return;
+  S.emoting = false;
+  if (myChar) {
+    const u = myChar.userData;
+    if (u.isHero) u.override = null;
+    u.emoteIndex = -1;
+    if (!u.isHero && u.armL) {
+      u.armL.shoulder.rotation.z = 0;
+      u.armR.shoulder.rotation.z = 0;
+      u.legL.hip.rotation.z = 0;
+      u.legR.hip.rotation.z = 0;
+    }
+  }
+  ui.showEmoteLabel(null);
+}
+
+function toggleEmoteWheel() {
+  if (!S) return;
+  S.emoteWheelOpen = !S.emoteWheelOpen;
+  ui.showEmoteWheel(S.emoteWheelOpen);
+  if (S.emoteWheelOpen && !IS_TOUCH && document.pointerLockElement) {
+    document.exitPointerLock();
+  } else if (!S.emoteWheelOpen && !IS_TOUCH && ctl.enabled) {
+    canvas.requestPointerLock();
+  }
+}
+
 function toggleBuildMode() {
   S.buildMode = !S.buildMode;
   if (S.buildMode && !S.ghost) makeGhost();

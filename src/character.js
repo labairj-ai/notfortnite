@@ -5,6 +5,15 @@
 import * as THREE from 'three';
 import { faceTexture } from './textures.js';
 
+export const EMOTES = [
+  { label: 'Default Dance',  emoji: '🕺' },
+  { label: 'Wave',           emoji: '👋' },
+  { label: 'Floss',          emoji: '🔄' },
+  { label: 'Take the L',     emoji: '😅' },
+  { label: 'Orange Justice', emoji: '🍊' },
+  { label: 'Hype',           emoji: '🎉' },
+];
+
 export const BODIES = [
   'male', 'female', 'banana', 'bear', 'frog', 'robot', 'hero',
   'knight', 'barbarian', 'mage', 'rogue',
@@ -558,6 +567,60 @@ export function animateCharacter(charGroup, dt, moving, shooting, airborne) {
         next.clampWhenFinished = true;
       }
       u.current = target;
+    }
+    return;
+  }
+
+  // procedural emote overrides normal animation
+  if ((u.emoteIndex ?? -1) >= 0) {
+    u.phase += dt * 3.8;
+    const s = Math.sin(u.phase), c = Math.cos(u.phase * 0.75);
+    const ei = u.emoteIndex;
+    if (ei === 0) { // Default Dance — arms wave + hip sway
+      u.armL.shoulder.rotation.set(s * 0.8, 0, 0.35 + c * 0.3);
+      u.armR.shoulder.rotation.set(-s * 0.8, 0, -0.35 - c * 0.3);
+      u.armL.elbow.rotation.x = s * 0.4 - 0.3;
+      u.armR.elbow.rotation.x = -s * 0.4 - 0.3;
+      u.legL.hip.rotation.set(c * 0.25, 0, 0);
+      u.legR.hip.rotation.set(-c * 0.25, 0, 0);
+      u.legL.knee.rotation.x = 0.08 + Math.max(0, -c) * 0.35;
+      u.legR.knee.rotation.x = 0.08 + Math.max(0, c) * 0.35;
+    } else if (ei === 1) { // Wave — right arm overhead
+      u.armR.shoulder.rotation.set(-1.5, 0, -0.25);
+      u.armR.elbow.rotation.x = s * 0.5 - 0.3;
+      u.armL.shoulder.rotation.set(s * 0.05, 0, 0);
+      u.armL.elbow.rotation.x = -0.25;
+      u.legL.hip.rotation.set(0, 0, 0);
+      u.legR.hip.rotation.set(0, 0, 0);
+      u.legL.knee.rotation.x = 0.05; u.legR.knee.rotation.x = 0.05;
+    } else if (ei === 2) { // Floss — arms swing side to side
+      u.armL.shoulder.rotation.set(s * 1.0, 0, c * 0.5 + 0.4);
+      u.armR.shoulder.rotation.set(-s * 1.0, 0, -c * 0.5 - 0.4);
+      u.armL.elbow.rotation.x = -0.2; u.armR.elbow.rotation.x = -0.2;
+      u.legL.hip.rotation.set(0, 0, s * 0.22);
+      u.legR.hip.rotation.set(0, 0, -s * 0.22);
+      u.legL.knee.rotation.x = 0.05; u.legR.knee.rotation.x = 0.05;
+    } else if (ei === 3) { // Take the L — arms spread wide, taunt
+      u.armL.shoulder.rotation.set(-0.95, 0, 0.65 + s * 0.15);
+      u.armR.shoulder.rotation.set(-0.95, 0, -0.65 - s * 0.15);
+      u.armL.elbow.rotation.x = s * 0.25; u.armR.elbow.rotation.x = s * 0.25;
+      u.legL.hip.rotation.set(c * 0.2, 0, 0); u.legR.hip.rotation.set(-c * 0.2, 0, 0);
+      u.legL.knee.rotation.x = 0.05; u.legR.knee.rotation.x = 0.05;
+    } else if (ei === 4) { // Orange Justice — fast kicks + counter-arms
+      u.legL.hip.rotation.set(s * 0.95, 0, 0);
+      u.legR.hip.rotation.set(-s * 0.95, 0, 0);
+      u.legL.knee.rotation.x = Math.max(0, -s) * 0.75 + 0.05;
+      u.legR.knee.rotation.x = Math.max(0, s) * 0.75 + 0.05;
+      u.armL.shoulder.rotation.set(-s * 0.65, 0, 0.5);
+      u.armR.shoulder.rotation.set(s * 0.65, 0, -0.5);
+      u.armL.elbow.rotation.x = -0.3; u.armR.elbow.rotation.x = -0.3;
+    } else { // Hype — both arms pump up
+      u.armL.shoulder.rotation.set(-0.6 + s * 0.65, 0, 0.25);
+      u.armR.shoulder.rotation.set(-0.6 + s * 0.65, 0, -0.25);
+      u.armL.elbow.rotation.x = -0.4 + s * 0.3; u.armR.elbow.rotation.x = -0.4 + s * 0.3;
+      u.legL.hip.rotation.set(s * 0.2, 0, 0); u.legR.hip.rotation.set(s * 0.2, 0, 0);
+      u.legL.knee.rotation.x = 0.15 + Math.max(0, -s) * 0.25;
+      u.legR.knee.rotation.x = 0.15 + Math.max(0, -s) * 0.25;
     }
     return;
   }
