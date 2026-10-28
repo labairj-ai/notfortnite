@@ -106,7 +106,7 @@ export function createWorld(seed) {
   scatter('crate', 35, 0.8);
 
   // --- standalone chests + floor loot spawn points ---
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < 30; i++) {
     const x = (rng() - 0.5) * (MAP_SIZE - 60);
     const z = (rng() - 0.5) * (MAP_SIZE - 60);
     chests.push({ id: 'c' + (chestId++), x, y: heightAt(x, z) + 0.5, z, opened: false });
