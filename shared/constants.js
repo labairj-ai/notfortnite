@@ -20,14 +20,15 @@ export const PLAYER = {
   DROP_ALT: 90,      // spawn altitude
 };
 
-// Storm phases: wait (circle holds), shrink (circle closes to r), dps outside.
+// Storm phases in seconds: wait (circle holds), shrink (circle closes to r), dps outside.
+// Longer shrink durations give players more time to outrun the moving storm.
 export const STORM_PHASES = [
-  { wait: 20, shrink: 25, r: 170, dps: 1 },
-  { wait: 15, shrink: 20, r: 110, dps: 2 },
-  { wait: 12, shrink: 18, r: 65,  dps: 4 },
-  { wait: 10, shrink: 15, r: 32,  dps: 7 },
-  { wait: 8,  shrink: 12, r: 10,  dps: 10 },
-  { wait: 6,  shrink: 10, r: 0,   dps: 14 },
+  { wait: 20, shrink: 50, r: 170, dps: 1 },
+  { wait: 15, shrink: 40, r: 110, dps: 2 },
+  { wait: 12, shrink: 36, r: 65,  dps: 4 },
+  { wait: 10, shrink: 30, r: 32,  dps: 7 },
+  { wait: 8,  shrink: 24, r: 10,  dps: 10 },
+  { wait: 6,  shrink: 20, r: 0,   dps: 14 },
 ];
 export const STORM_START_R = 300;
 
