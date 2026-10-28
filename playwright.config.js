@@ -1,0 +1,2 @@
+import {defineConfig} from '@playwright/test';
+export default defineConfig({testDir:'tests/browser',timeout:60000,workers:1,use:{baseURL:'http://127.0.0.1:5173/notfortnite/',headless:true,launchOptions:{args:['--use-angle=swiftshader','--enable-webgl']}},webServer:[{command:'npm run dev -- --host 127.0.0.1',url:'http://127.0.0.1:5173/notfortnite/',reuseExistingServer:false},{command:'npm start --prefix server',port:8081,reuseExistingServer:false}],reporter:[['list'],['json',{outputFile:'test-results/browser.json'}]]});

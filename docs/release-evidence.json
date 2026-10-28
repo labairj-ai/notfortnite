@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "automated": "Run npm run test:ci and npm run test:browser at the PR head",
+  "desktop_human": "NOT RUN",
+  "android_physical": "NOT RUN",
+  "iphone_physical": "NOT RUN",
+  "performance_device_acceptance": "NOT RUN",
+  "promotion": "OWNER REVIEW REQUIRED"
+}
