@@ -82,6 +82,8 @@ window.addEventListener('resize', () => {
 // Session state
 // ---------------------------------------------------------------------------
 let S = null; // active session
+// Test observers must not depend on a WebGL animation frame being scheduled.
+if(import.meta.env.DEV)Object.defineProperty(window,'__S',{get:()=>S});
 
 function makeScene() {
   const scene = new THREE.Scene();
@@ -1004,7 +1006,7 @@ function loop(now) {
   const dt = Math.min(0.05, (now - lastT) / 1000);
   lastT = now;
   if (!S || S.state !== 'playing') return;
-  if (import.meta.env.DEV) { window.__S = S; window.__myChar = myChar; }
+  if (import.meta.env.DEV) { window.__myChar = myChar; }
 
   ctl.update();
   updateLocalPlayer(dt);
