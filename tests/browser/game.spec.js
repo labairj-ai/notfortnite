@@ -70,6 +70,10 @@ test("Practice target, heal, reset, exit and next battle use clean state", async
     return { ok: r.ok, noStorm: s.match.storm.dps };
   });
   expect(result).toEqual({ ok: true, noStorm: 0 });
+  // Practice starts with a free cursor. Esc also restores it after aiming.
+  await page.locator("#game-canvas").click({ position: { x: 200, y: 200 } });
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(() => !document.pointerLockElement);
   await page.locator("#practice-reset").click();
   await expect(page.locator("#practice-status")).toContainText("0/8");
   await page.locator("#practice-exit").click();

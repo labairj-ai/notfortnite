@@ -534,3 +534,6 @@ body[data-control-preset="Simple"] #btn-emote { display:none; }
 
 .screen, .game-panel { touch-action: auto; user-select: auto; -webkit-user-select: auto; }
 .screen input, .game-panel input { user-select: text; -webkit-user-select: text; }
+
+.practice-cursor-hint { font-size:10px; opacity:.8; }
+body.touch .practice-cursor-hint { display:none; }

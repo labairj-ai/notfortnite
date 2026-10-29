@@ -750,7 +750,7 @@ function enterPlay() {
   ctl.resetInputs("enter-play");
   ctl.enabled = true;
   unlockAudio();
-  if (!IS_TOUCH) requestLock();
+  if (!IS_TOUCH && !S.practice) requestLock();
   updateSlotsUI();
   ui.setMats(S.mats);
 }
