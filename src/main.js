@@ -442,7 +442,7 @@ function onLocalDeath() {
 function enterPlay() {
   ctl.enabled = true;
   unlockAudio();
-  if (!IS_TOUCH) canvas.requestPointerLock();
+  if (!IS_TOUCH) canvas.requestPointerLock()?.catch?.(()=>{});
   updateSlotsUI();
   ui.setMats(S.mats);
 }
@@ -454,7 +454,7 @@ function exitPlayControls() {
 
 canvas.addEventListener('click', () => {
   if (S && S.state === 'playing' && !IS_TOUCH && ctl.enabled && document.pointerLockElement !== canvas) {
-    canvas.requestPointerLock();
+    canvas.requestPointerLock()?.catch?.(()=>{});
   }
 });
 
@@ -524,7 +524,7 @@ function updateLocalPlayer(dt) {
   if (ctl.emoteSelected >= 0) {
     playEmote(ctl.emoteSelected);
     S.emoteWheelOpen = false;
-    if (!IS_TOUCH) canvas.requestPointerLock();
+    if (!IS_TOUCH) canvas.requestPointerLock()?.catch?.(()=>{});
   }
   if (S.emoting && vlen > 0.1) cancelEmote();
 
@@ -736,7 +736,7 @@ function toggleEmoteWheel() {
   if (S.emoteWheelOpen && !IS_TOUCH && document.pointerLockElement) {
     document.exitPointerLock();
   } else if (!S.emoteWheelOpen && !IS_TOUCH && ctl.enabled) {
-    canvas.requestPointerLock();
+    canvas.requestPointerLock()?.catch?.(()=>{});
   }
 }
 

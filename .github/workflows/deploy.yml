@@ -1,34 +1,49 @@
-name: Deploy to GitHub Pages
-
+name: Owner-approved GitHub Pages release
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
-
+    inputs:
+      approved_sha:
+        description: Exact 40-character commit reviewed by the owner
+        required: true
+        type: string
+      owner_reviewed:
+        description: I reviewed this exact source and the release evidence
+        required: true
+        default: false
+        type: boolean
 permissions:
   contents: read
   pages: write
   id-token: write
-
 concurrency:
   group: pages
-  cancel-in-progress: true
-
+  cancel-in-progress: false
 jobs:
   build:
+    if: inputs.owner_reviewed && github.actor == github.repository_owner
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.approved_sha }}
+      - name: Verify exact release SHA
+        env:
+          APPROVED_SHA: ${{ inputs.approved_sha }}
+        run: |
+          [[ "$APPROVED_SHA" =~ ^[a-f0-9]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$APPROVED_SHA"
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npm run build
+      - run: npm ci --prefix server
+      - run: npm run test:ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
-
   deploy:
     needs: build
     runs-on: ubuntu-latest
