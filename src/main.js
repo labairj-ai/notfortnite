@@ -323,22 +323,29 @@ function startOnline(url) {
       net.send({ t: "join", name: custom.name || "Player", custom });
     },
     onMessage(msg) {
+      if (net !== pendingNet || net.closedByMenu) return;
       handleNetMessage(net, msg);
     },
     onClose() {
-      if (S && S.mode === "online") {
+      if (net.closedByMenu || net !== pendingNet) return;
+      if (S?.net === net) {
         disposeSession();
         exitPlayControls();
         S = null;
       }
       ui.setLobbyStatus("Disconnected from server.");
-      setTimeout(() => ui.showScreen("menu-screen"), 1500);
+      setTimeout(() => {
+        if (!S && pendingNet === net) ui.showScreen("menu-screen");
+      }, 1500);
     },
     onError() {
+      if (net.closedByMenu || net !== pendingNet) return;
       ui.setLobbyStatus(
         "Could not reach server. Check the address and that the server is running.",
       );
-      setTimeout(() => ui.showScreen("menu-screen"), 2500);
+      setTimeout(() => {
+        if (!S && pendingNet === net) ui.showScreen("menu-screen");
+      }, 2500);
     },
   });
   pendingNet = net;
@@ -1881,7 +1888,10 @@ function endSession() {
   if (S) disposeSession();
   const net = S?.net;
   S = null;
-  if (net) net.close();
+  if (net) {
+    net.closedByMenu = true;
+    net.close();
+  }
   myChar = null;
   ui.showScreen("menu-screen");
 }
@@ -1943,7 +1953,10 @@ $("end-again-btn").addEventListener("click", () => {
 });
 $("end-menu-btn").addEventListener("click", endSession);
 $("lobby-cancel-btn").addEventListener("click", () => {
-  if (pendingNet) pendingNet.close();
+  if (pendingNet) {
+    pendingNet.closedByMenu = true;
+    pendingNet.close();
+  }
   endSession();
 });
 

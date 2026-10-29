@@ -304,12 +304,46 @@ test("full inventory swap cancel preserves incoming item and confirmed swap drop
   expect(errors).toEqual([]);
 });
 
-test('repeated Practice sessions release scene resources after cache warmup',async({page})=>{
- const errors=await boot(page),samples=[];
- for(let i=0;i<4;i++){
-  await page.locator('#practice-btn').click();await page.waitForFunction(()=>window.__myChar);await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
-  samples.push(await page.evaluate(()=>({...window.__performanceReport().renderer})));
-  await page.locator('#practice-exit').click();await expect(page.locator('#menu-screen')).toBeVisible();
- }
- expect(samples[3].geometries).toBeLessThanOrEqual(samples[1].geometries+3);expect(samples[3].textures).toBeLessThanOrEqual(samples[1].textures+3);expect(errors).toEqual([]);
+test("repeated Practice sessions release scene resources after cache warmup", async ({
+  page,
+}) => {
+  const errors = await boot(page),
+    samples = [];
+  for (let i = 0; i < 4; i++) {
+    await page.locator("#practice-btn").click();
+    await page.waitForFunction(() => window.__myChar);
+    await page.evaluate(
+      () =>
+        new Promise((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(resolve)),
+        ),
+    );
+    samples.push(
+      await page.evaluate(() => ({ ...window.__performanceReport().renderer })),
+    );
+    await page.locator("#practice-exit").click();
+    await expect(page.locator("#menu-screen")).toBeVisible();
+  }
+  expect(samples[3].geometries).toBeLessThanOrEqual(samples[1].geometries + 3);
+  expect(samples[3].textures).toBeLessThanOrEqual(samples[1].textures + 3);
+  expect(errors).toEqual([]);
+});
+
+test("leaving an online lobby cannot later replace a new Practice session", async ({
+  page,
+}) => {
+  const errors = await boot(page);
+  await page.locator("#play-online-btn").click();
+  await page.locator("#server-url").fill("ws://127.0.0.1:8081");
+  await page.locator("#server-connect-btn").click();
+  await page.waitForFunction(
+    () => window.__gameTest.getSession()?.mode === "online",
+  );
+  await page.locator("#lobby-cancel-btn").click();
+  await page.locator("#practice-btn").click();
+  // Allow the old disconnect UI timer to expire; it must not overwrite the new session.
+  await page.waitForTimeout(1800);
+  await expect(page.locator("#practice-bar")).toBeVisible();
+  await expect(page.locator("#hud")).toBeVisible();
+  expect(errors).toEqual([]);
 });
