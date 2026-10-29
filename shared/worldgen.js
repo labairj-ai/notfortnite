@@ -3,7 +3,7 @@
 import { createNoise2D } from 'simplex-noise';
 import { MAP_SIZE, BUILD, HARVEST, mulberry32 } from './constants.js';
 
-export function createWorld(seed) {
+export function createWorld(seed, options = {}) {
   const rng = mulberry32(seed);
   const noise = createNoise2D(mulberry32(seed ^ 0x9e3779b9));
   const noise2 = createNoise2D(mulberry32(seed ^ 0x51ab3c4d));
@@ -112,7 +112,7 @@ export function createWorld(seed) {
     chests.push({ id: 'c' + (chestId++), x, y: heightAt(x, z) + 0.5, z, opened: false });
   }
   const floorLootSpots = [];
-  for (let i = 0; i < 55; i++) {
+  for (let i = 0; i < (options.preset === 'Casual' ? 85 : 55); i++) {
     const x = (rng() - 0.5) * (MAP_SIZE - 60);
     const z = (rng() - 0.5) * (MAP_SIZE - 60);
     floorLootSpots.push({ x, y: heightAt(x, z), z });
