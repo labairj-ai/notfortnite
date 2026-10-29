@@ -1,2 +1,13 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {createPerformanceMonitor,percentile} from '../src/performance.js';
-test('Auto requires sustained slow frames and reports measured percentiles',()=>{const p=createPerformanceMonitor();for(let i=0;i<230;i++)assert.equal(p.sample(40),null);let change;for(let i=0;i<20;i++)change=p.sample(40)||change;assert.equal(change,'Low');assert.equal(p.report().p95,40);assert.equal(percentile([], .95),null);assert.equal(p.sample(Infinity),null);});
+import test from "node:test";
+import assert from "node:assert/strict";
+import { createPerformanceMonitor, percentile } from "../src/performance.js";
+test("Auto requires sustained slow frames and reports measured percentiles", () => {
+  const p = createPerformanceMonitor();
+  for (let i = 0; i < 230; i++) assert.equal(p.sample(40), null);
+  let change;
+  for (let i = 0; i < 20; i++) change = p.sample(40) || change;
+  assert.equal(change, "Low");
+  assert.equal(p.report().p95, 40);
+  assert.equal(percentile([], 0.95), null);
+  assert.equal(p.sample(Infinity), null);
+});

@@ -1,5 +1,63 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {nextWaypoint,DIFFICULTIES} from '../shared/bots.js';import {createMatch,addPlayer,startMatch,tickMatch} from '../shared/match.js';
-const wall={id:'wall',type:'wall',x:0,y:0,z:0,rot:0,hp:300};
-test('bounded navigation routes around a wall; mutable cover is reevaluated',()=>{const w={heightAt:()=>0,builds:new Map([['wall',wall]]),props:new Map()};const p=nextWaypoint(w,{x:0,y:0,z:-4},{x:0,y:0,z:8});assert(p.expanded<=160);assert.notDeepEqual({x:p.x,z:p.z},{x:0,z:8});w.builds.clear();assert.equal(nextWaypoint(w,{x:0,y:0,z:-4},{x:0,y:0,z:8}).expanded,0);});
-test('bots do not shoot through cover; deterministic difficulty profiles use bounded decisions',()=>{const run=()=>{const m=createMatch(3,{difficulty:'Challenging'});m.world={heightAt:()=>0,builds:new Map([['wall',wall]]),props:new Map()};const a=addPlayer(m,{id:'a',isBot:true}),b=addPlayer(m,{id:'b'});Object.assign(a,{x:0,y:0,z:-4});Object.assign(b,{x:0,y:0,z:4});startMatch(m,{onEvent:()=>{}});for(let i=0;i<300;i++)tickMatch(m,1/30,{heightAt:()=>0,onEvent:()=>{}});return {hp:b.hp,brain:a.bot};};const a=run();assert.equal(a.hp,100);assert.deepEqual(a,run());assert(a.brain.trace.length<=24);assert(DIFFICULTIES.Beginner.reaction>DIFFICULTIES.Challenging.reaction);});
-test('agent crosses a multi-piece barrier without rounding its route into the wall',()=>{const w={heightAt:()=>0,builds:new Map(),props:new Map()};for(let i=-1;i<=1;i++)w.builds.set('b'+i,{...wall,id:'b'+i,x:i*4});const p={x:0,y:0,z:-8},goal={x:0,y:0,z:8};for(let i=0;i<100;i++){const n=nextWaypoint(w,p,goal),d=Math.hypot(n.x-p.x,n.z-p.z);if(!d)break;p.x+=(n.x-p.x)/d*Math.min(.5,d);p.z+=(n.z-p.z)/d*Math.min(.5,d);}assert(Math.hypot(p.x-goal.x,p.z-goal.z)<1);});
+import test from "node:test";
+import assert from "node:assert/strict";
+import { nextWaypoint, DIFFICULTIES } from "../shared/bots.js";
+import {
+  createMatch,
+  addPlayer,
+  startMatch,
+  tickMatch,
+} from "../shared/match.js";
+const wall = { id: "wall", type: "wall", x: 0, y: 0, z: 0, rot: 0, hp: 300 };
+test("bounded navigation routes around a wall; mutable cover is reevaluated", () => {
+  const w = {
+    heightAt: () => 0,
+    builds: new Map([["wall", wall]]),
+    props: new Map(),
+  };
+  const p = nextWaypoint(w, { x: 0, y: 0, z: -4 }, { x: 0, y: 0, z: 8 });
+  assert(p.expanded <= 160);
+  assert.notDeepEqual({ x: p.x, z: p.z }, { x: 0, z: 8 });
+  w.builds.clear();
+  assert.equal(
+    nextWaypoint(w, { x: 0, y: 0, z: -4 }, { x: 0, y: 0, z: 8 }).expanded,
+    0,
+  );
+});
+test("bots do not shoot through cover; deterministic difficulty profiles use bounded decisions", () => {
+  const run = () => {
+    const m = createMatch(3, { difficulty: "Challenging" });
+    m.world = {
+      heightAt: () => 0,
+      builds: new Map([["wall", wall]]),
+      props: new Map(),
+    };
+    const a = addPlayer(m, { id: "a", isBot: true }),
+      b = addPlayer(m, { id: "b" });
+    Object.assign(a, { x: 0, y: 0, z: -4 });
+    Object.assign(b, { x: 0, y: 0, z: 4 });
+    startMatch(m, { onEvent: () => {} });
+    for (let i = 0; i < 300; i++)
+      tickMatch(m, 1 / 30, { heightAt: () => 0, onEvent: () => {} });
+    return { hp: b.hp, brain: a.bot };
+  };
+  const a = run();
+  assert.equal(a.hp, 100);
+  assert.deepEqual(a, run());
+  assert(a.brain.trace.length <= 24);
+  assert(DIFFICULTIES.Beginner.reaction > DIFFICULTIES.Challenging.reaction);
+});
+test("agent crosses a multi-piece barrier without rounding its route into the wall", () => {
+  const w = { heightAt: () => 0, builds: new Map(), props: new Map() };
+  for (let i = -1; i <= 1; i++)
+    w.builds.set("b" + i, { ...wall, id: "b" + i, x: i * 4 });
+  const p = { x: 0, y: 0, z: -8 },
+    goal = { x: 0, y: 0, z: 8 };
+  for (let i = 0; i < 100; i++) {
+    const n = nextWaypoint(w, p, goal),
+      d = Math.hypot(n.x - p.x, n.z - p.z);
+    if (!d) break;
+    p.x += ((n.x - p.x) / d) * Math.min(0.5, d);
+    p.z += ((n.z - p.z) / d) * Math.min(0.5, d);
+  }
+  assert(Math.hypot(p.x - goal.x, p.z - goal.z) < 1);
+});

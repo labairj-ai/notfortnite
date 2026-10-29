@@ -171,6 +171,7 @@ export function faceTexture(skinColor, style = 'default') {
     }
   });
   tex.repeat.set(1, 1);
+  tex.userData.sharedModel=true;
   faceCache.set(key, tex);
   return tex;
 }

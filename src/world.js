@@ -15,6 +15,8 @@ export function createWorldView(scene, world, quality = 'high') {
     lootMeshes: new Map(),
     propInstances: new Map(),   // propId -> { kind, indices }
   };
+  const resources={geometries:new Set(),materials:new Set()};view.resources=resources;
+  function track(root){root.traverse(o=>{if(o.geometry)resources.geometries.add(o.geometry);for(const m of(Array.isArray(o.material)?o.material:o.material?[o.material]:[]))resources.materials.add(m);});}
   const timed = [];             // shader materials needing uTime
 
   // ======================= TERRAIN =======================
@@ -269,7 +271,7 @@ export function createWorldView(scene, world, quality = 'high') {
     mesh.castShadow = HIGH;
     mesh.receiveShadow = HIGH;
     buildGroup.add(mesh);
-    view.buildMeshes.set(piece.id, mesh);
+    view.buildMeshes.set(piece.id, mesh);track(mesh);
   };
   view.removeBuildMesh = (id) => {
     const mesh = view.buildMeshes.get(id);
@@ -349,11 +351,11 @@ export function createWorldView(scene, world, quality = 'high') {
     grp.position.set(drop.x, drop.y, drop.z);
     grp.userData.core = core;
     lootGroup.add(grp);
-    view.lootMeshes.set(drop.id, grp);
+    view.lootMeshes.set(drop.id, grp);track(grp);
   };
   view.removeLootMesh = (id) => {
     const mesh = view.lootMeshes.get(id);
-    if (mesh) { lootGroup.remove(mesh); view.lootMeshes.delete(id); }
+    if(mesh){mesh.traverse(o=>{if(o.geometry&&o.geometry!==lootGeo){o.geometry.dispose();resources.geometries.delete(o.geometry);}for(const m of(Array.isArray(o.material)?o.material:o.material?[o.material]:[])){m.dispose();resources.materials.delete(m);}});lootGroup.remove(mesh);view.lootMeshes.delete(id);}
   };
 
   // ======================= STORM WALL =======================
@@ -415,6 +417,7 @@ export function createWorldView(scene, world, quality = 'high') {
     }
   };
 
+  track(scene);
   return view;
 }
 
@@ -468,7 +471,7 @@ export function supportHeight(world, x, y, z) {
     } else if (b.type === 'ramp') {
       // rotate point into ramp-local space
       const dx = x - b.x, dz = z - b.z;
-      const ang = -b.rot * Math.PI / 2;
+      const ang = b.rot * Math.PI / 2;
       const lx = dx * Math.cos(ang) - dz * Math.sin(ang);
       const lz = dx * Math.sin(ang) + dz * Math.cos(ang);
       if (Math.abs(lx) <= G / 2 && Math.abs(lz) <= G / 2) {
@@ -508,31 +511,4 @@ export function resolveWalls(world, x, y, z, radius) {
   return { x, z };
 }
 
-// Raycast against builds and props (coarse). Returns nearest hit or null.
-export function raycastWorld(world, origin, dir, maxDist) {
-  let best = null;
-  // builds as spheres (coarse but cheap), then refined by slab distance
-  for (const b of world.builds.values()) {
-    const cy = b.type === 'wall' ? b.y + G / 2 : b.y + (b.type === 'ramp' ? G / 2 : 0.15);
-    const hit = raySphere(origin, dir, b.x, cy, b.z, G * 0.72, maxDist);
-    if (hit !== null && (!best || hit < best.dist)) best = { dist: hit, kind: 'build', id: b.id };
-  }
-  for (const p of world.props.values()) {
-    const r = p.type === 'tree' ? 1.1 : 1.4;
-    const cy = p.type === 'tree' ? p.y + 2.5 : p.y + 1.0;
-    const hit = raySphere(origin, dir, p.x, cy, p.z, r * p.scale, maxDist);
-    if (hit !== null && (!best || hit < best.dist)) best = { dist: hit, kind: 'prop', id: p.id };
-  }
-  return best;
-}
-
-export function raySphere(o, d, cx, cy, cz, r, maxDist) {
-  const ox = o.x - cx, oy = o.y - cy, oz = o.z - cz;
-  const b = ox * d.x + oy * d.y + oz * d.z;
-  const c = ox * ox + oy * oy + oz * oz - r * r;
-  const disc = b * b - c;
-  if (disc < 0) return null;
-  const t = -b - Math.sqrt(disc);
-  if (t < 0 || t > maxDist) return null;
-  return t;
-}
+export {raycastWorld,raySphere} from '../shared/geometry.js';

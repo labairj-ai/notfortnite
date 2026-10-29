@@ -96,7 +96,7 @@ npx vite             # client dev server
 cd server && npm start   # optional: local multiplayer on ws://localhost:8081
 ```
 
-Deploys to GitHub Pages automatically on every push to `main`.
+After owner review, run the **Owner-approved GitHub Pages release** workflow with the exact reviewed SHA. It runs tests/build/browser checks before Pages promotion; pushes do not deploy automatically.
 
 ## Credits
 
@@ -113,10 +113,31 @@ Deploys to GitHub Pages automatically on every push to `main`.
 
 All other art is procedural.
 
-## v1 known limits
+## Playability controls
 
-- Hits are adjudicated by the shooter's client (fine for a friendly private server,
-  not cheat-proof)
-- Bots don't build and ignore player-built walls when pathing
-- Inventory has no drop/swap — full slots ignore new pickups
-- Ammo is infinite (fire rate is the limiter)
+- **Classic** retains the slower storm and 30 scattered weapon chests; **Casual** adds floor loot and starts players nearer settlements. Both keep ten-player battle royale.
+- Choose **Beginner / Standard / Challenging** bots before solo play. Bots use bounded navigation and cover checks; F3 shows local decision/aim diagnostics.
+- **Practice** is offline, has no storm pressure, moving/stationary targets, weapon selection, optional exercises, reset/reposition and an immediate exit. Training state never carries into matches.
+- **Controls & graphics** saves sensitivity, invert-Y, handedness, joystick, button sizes, layout, HUD opacity and quality locally. Aim assist is opt-in and restricted to solo Casual/Practice; it is disabled online.
+- **F / OPEN / SWAP** opens a chest or an explicit full-inventory replacement dialog. **G / DROP** drops the equipped item; pickaxe stays protected. Compatible healing uses stack to documented caps (15 bandages, 6 mini-shields, 3 medkits or shield potions).
+- Match summaries stay on this device. **Export local match summaries** is the only export action; no analytics service is used.
+
+## Validation and review
+
+```sh
+npm ci
+npm ci --prefix server
+npm run test:ci
+npx playwright install chromium
+npm run test:browser
+node scripts/pacing.mjs  # 20 simulated seeds per preset; not human play data
+```
+
+See [release checks](docs/RELEASE.md), [implementation/evidence](docs/BACKLOG-IMPLEMENTATION.md) and the [backlog](.todos/README.md). Physical Android/iPhone and human acceptance are separate from automated PASS.
+
+## Remaining limits
+
+- Server-owned transactions validate inventory, damage, cadence, geometry and basic movement plausibility. This is not a competitive anti-cheat or lag-compensated physics server.
+- Bots do not build. Navigation has a per-decision budget and needs human playtesting on complex player-built mazes.
+- Ammo remains infinite; firing cadence is unchanged.
+- Physical-device FPS, heat, memory pressure and touch comfort are not certified by headless Chromium results.

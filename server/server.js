@@ -1,3 +1,4 @@
+import {initializeInventory,processAction,acceptPosition} from '../shared/actions.js';
 // NotFortnite multiplayer server.
 //
 //   cd server && npm install && npm start          (listens on :8081)
@@ -18,7 +19,7 @@ import {
 } from '../shared/match.js';
 
 const PORT = process.env.PORT || 8081;
-const wss = new WebSocketServer({ port: PORT });
+const wss = new WebSocketServer({ port: PORT, maxPayload: 16384 });
 console.log(`[notfortnite] server listening on :${PORT}`);
 
 let nextClientId = 1;
@@ -32,6 +33,7 @@ function newLobby() {
   const world = createWorld(seed);
   const match = createMatch(seed);
   match.heightAt = world.heightAt;
+  match.world = world;
   room = {
     seed,
     world,
@@ -52,6 +54,9 @@ function newLobby() {
 const api = {
   heightAt: (x, z) => room.world.heightAt(x, z),
   onEvent: (ev) => {
+    if(ev.t==='buildAdded')room.deltas.playerBuilds.push(ev.piece);
+    if(ev.t==='buildGone')room.deltas.buildsGone.push(ev.id);
+    if(ev.t==='propGone')room.deltas.propsGone.push(ev.id);
     broadcast({ t: 'ev', ev });
     if (ev.t === 'end') {
       room.state = 'ended';
@@ -66,14 +71,18 @@ const api = {
 // ---------------------------------------------------------------------------
 wss.on('connection', (ws) => {
   const id = 'p' + (nextClientId++);
+  let messageEpoch=Date.now(),messageCount=0;
   ws.on('message', (data) => {
+    if(Date.now()-messageEpoch>1000){messageEpoch=Date.now();messageCount=0;}if(++messageCount>100)return;
     let msg;
     try { msg = JSON.parse(data); } catch { return; }
+    if(!msg||typeof msg!=='object'||Array.isArray(msg))return;
     handleMessage(ws, id, msg);
   });
   ws.on('close', () => {
     const c = clients.get(ws);
     clients.delete(ws);
+    if(c&&room.state==='lobby')room.match.players.delete(c.id);
     if (!c) return;
     const p = room.match.players.get(c.id);
     if (p && p.alive && room.state === 'play') {
@@ -97,8 +106,14 @@ wss.on('connection', (ws) => {
 
 function handleMessage(ws, id, msg) {
   const c = clients.get(ws);
+  if(['attack','pickup','drop','useHeal','build'].includes(msg.t)){
+    if(!c)return;const p=room.match.players.get(c.id);
+    const result=processAction(room.match,room.world,p,msg,api);
+    if(p)send(ws,{t:'inventory',seq:msg.seq,ok:result.ok,reason:result.reason,slots:p.slots,mats:p.mats,hp:p.hp,shield:p.shield});return;
+  }
   switch (msg.t) {
     case 'join': {
+      if(c)return;
       const name = String(msg.name || 'Player').slice(0, 16);
       const client = { id, ws, name, custom: msg.custom || null, inMatch: false };
       clients.set(ws, client);
@@ -115,74 +130,17 @@ function handleMessage(ws, id, msg) {
       }
       break;
     case 'state': {
-      if (!c) return;
+      if (!c || room.state!=='play') return;
       const p = room.match.players.get(c.id);
       if (!p || !p.alive) return;
-      p.x = msg.x; p.y = msg.y; p.z = msg.z;
-      p.yaw = msg.yaw; p.pitch = msg.pitch;
-      p.anim = msg.anim; p.weapon = msg.weapon; p.rarity = msg.rarity || 0;
+      if(acceptPosition(p,msg,room.match.time)&&Number.isInteger(msg.slot)){const item=p.slots?.[msg.slot];if(item?.kind==='weapon'){p.weapon=item.w;p.rarity=item.rarity;}}
       break;
     }
-    case 'shot':
-      if (c) broadcastExcept(ws, { t: 'ev', ev: { ...msg, t: 'shot', from: c.id } });
-      break;
-    case 'hit': {
-      if (!c || room.state !== 'play') return;
-      const dmg = Math.max(0, Math.min(200, Number(msg.dmg) || 0));
-      damagePlayer(room.match, msg.target, dmg, c.id, api);
-      break;
-    }
-    case 'useHeal': {
-      if (!c) return;
-      const p = room.match.players.get(c.id);
-      const h = HEALS[msg.h];
-      if (!p || !p.alive || !h) return;
-      if (h.hp) p.hp = Math.min(h.hpCap, p.hp + h.hp);
-      if (h.shield) p.shield = Math.min(h.shieldCap, p.shield + h.shield);
-      break;
-    }
-    case 'build': {
-      if (!c || !msg.piece || room.world.builds.has(msg.piece.id)) return;
-      const piece = {
-        id: String(msg.piece.id), type: msg.piece.type, mat: msg.piece.mat,
-        x: msg.piece.x, y: msg.piece.y, z: msg.piece.z, rot: msg.piece.rot | 0,
-        hp: BUILD.MAT_HP[msg.piece.mat] || 150,
-      };
-      if (!['wall', 'floor', 'ramp'].includes(piece.type)) return;
-      room.world.builds.set(piece.id, piece);
-      room.deltas.playerBuilds.push(piece);
-      broadcastExcept(ws, { t: 'build', piece });
-      break;
-    }
-    case 'buildDmg': {
-      const b = room.world.builds.get(msg.id);
-      if (!b) return;
-      b.hp -= Math.max(0, Math.min(200, Number(msg.dmg) || 0));
-      if (b.hp <= 0) {
-        room.world.builds.delete(msg.id);
-        room.deltas.buildsGone.push(msg.id);
-        broadcast({ t: 'buildGone', id: msg.id });
-      } else {
-        broadcastExcept(ws, { t: 'buildHp', id: msg.id, hp: b.hp });
-      }
-      break;
-    }
-    case 'propHit': {
-      const p = room.world.props.get(msg.id);
-      if (!p) return;
-      p.hp--;
-      if (p.hp <= 0) {
-        room.world.props.delete(msg.id);
-        room.deltas.propsGone.push(msg.id);
-        broadcast({ t: 'propGone', id: msg.id });
-      } else {
-        broadcastExcept(ws, { t: 'propHit', id: msg.id, hp: p.hp });
-      }
-      break;
-    }
+    // Legacy client-reported hit/prop/material messages have no authority.
     case 'chest': {
+      const player=c&&room.match.players.get(c.id);if(room.state!=='play'||!player?.alive)return;
       const chest = room.world.chests.find(ch => ch.id === msg.id);
-      if (!chest || chest.opened) return;
+      if (!chest || chest.opened || Math.hypot(player.x-chest.x,player.z-chest.z)>2.6 || Math.abs(player.y-chest.y)>3) return;
       chest.opened = true;
       room.deltas.chestsOpened.push(chest.id);
       broadcast({ t: 'chestOpened', id: chest.id });
@@ -193,13 +151,7 @@ function handleMessage(ws, id, msg) {
       });
       break;
     }
-    case 'pickup': {
-      if (room.match.groundLoot.has(msg.id)) {
-        room.match.groundLoot.delete(msg.id);
-        broadcastExcept(ws, { t: 'lootGone', id: msg.id });
-      }
-      break;
-    }
+
   }
 }
 
@@ -211,10 +163,13 @@ function joinLobbyOrMatch(client) {
     send(client.ws, { t: 'lobby', humans: clients.size, countdown: null });
     return;
   }
+  if(room.match.players.size>=MATCH_PLAYERS&&!room.match.players.has(client.id)){send(client.ws,{t:'lobby',humans:clients.size,countdown:null});return;}
   client.inMatch = true;
   const p = room.match.players.get(client.id) ||
     addPlayer(room.match, { id: client.id, name: client.name, custom: client.custom });
+  if(!p.slots)initializeInventory(p);
   send(client.ws, welcomeMsg(client, { x: p.x, y: p.y, z: p.z }));
+  send(client.ws,{t:'inventory',slots:p.slots,mats:p.mats,hp:p.hp,shield:p.shield});
   broadcastExcept(client.ws, { t: 'playerJoined', player: publicPlayer(p) });
   if (room.countdown === null) room.countdown = LOBBY_COUNTDOWN;
   broadcastLobby();

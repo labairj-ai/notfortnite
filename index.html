@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -18,8 +18,13 @@
     <div class="panel">
       <h1 id="game-title">NOTFORTNITE</h1>
       <p class="subtitle">Battle Royale · Last One Standing Wins</p>
+      <label for="match-preset">Solo match</label><select id="match-preset"><option>Classic</option><option>Casual</option></select>
+      <label for="bot-difficulty">Bots</label><select id="bot-difficulty"><option>Beginner</option><option selected>Standard</option><option>Challenging</option></select>
+      <button id="practice-btn" class="big-btn secondary">Practice</button>
+      <button id="metrics-export" class="big-btn secondary">Export local match summaries</button>
       <button id="play-solo-btn" class="big-btn">⚔️ Play vs CPUs</button>
       <button id="play-online-btn" class="big-btn secondary">🌐 Multiplayer</button>
+      <button id="settings-btn" class="big-btn secondary">Controls &amp; graphics</button>
       <button id="customize-btn" class="big-btn secondary">🎨 Customize</button>
       <p class="menu-help">
         Glide in · loot chests · harvest materials with your pickaxe ·
@@ -81,7 +86,7 @@
   <div id="end-screen" class="screen hidden">
     <div class="panel">
       <h1 id="end-title"></h1>
-      <p id="end-sub"></p>
+      <p id="end-sub"></p><p id="match-summary"></p>
       <button id="end-again-btn" class="big-btn">Play Again</button>
       <button id="end-menu-btn" class="big-btn secondary">Main Menu</button>
     </div>
@@ -89,13 +94,15 @@
 
   <!-- ===================== HUD ===================== -->
   <div id="hud" class="hidden">
+    <div id="practice-bar" class="game-panel hidden"><span id="practice-status"></span><select id="practice-loadout" aria-label="Practice weapon"><option value="ar">Rifle</option><option value="pistol">Pistol</option><option value="smg">SMG</option><option value="shotgun">Shotgun</option><option value="sniper">Sniper</option></select><button id="practice-skip">Skip guide</button><button id="practice-respawn">Reposition</button><button id="practice-reset">Reset</button><button id="practice-exit">Exit Practice</button></div>
     <div id="damage-flash"></div>
     <div id="crosshair">+</div>
+    <div id="damage-direction" class="hidden" aria-hidden="true">▲</div><pre id="debug-overlay" class="hidden"></pre>
     <div id="hitmarker">✕</div>
 
     <div id="hud-top-left">
       <canvas id="minimap" width="132" height="132"></canvas>
-      <div id="storm-status"></div>
+      <div id="storm-status"></div><div id="guidance"></div>
     </div>
 
     <div id="hud-top-right">
@@ -138,6 +145,7 @@
     <!-- touch controls -->
     <div id="joystick"><div id="joystick-knob"></div></div>
     <div id="touch-buttons">
+      <button class="touch-btn" id="btn-drop" aria-label="Drop equipped item">DROP</button>
       <button class="touch-btn" id="btn-emote">🎭</button>
       <button class="touch-btn" id="btn-interact">OPEN</button>
       <button class="touch-btn" id="btn-build">🔨</button>
@@ -150,6 +158,23 @@
     </div>
   </div>
 
+  <dialog id="settings-dialog" class="game-panel"><h2>Controls &amp; graphics</h2>
+    <form id="settings-form">
+      <label>Look sensitivity <input name="sensitivity" type="range" min="0.25" max="3" step="0.05"></label>
+      <label><input name="invertY" type="checkbox"> Invert vertical look</label>
+      <label>Handedness <select name="handedness"><option value="right">Right handed</option><option value="left">Left handed</option></select></label>
+      <label>Joystick <select name="joystick"><option value="floating">Floating</option><option value="fixed">Fixed</option></select></label>
+      <label>Controls <select name="preset"><option>Simple</option><option>Standard</option><option>Advanced</option></select></label>
+      <label>Button size <input name="buttonSize" type="range" min="44" max="96"></label>
+      <label>HUD opacity <input name="opacity" type="range" min="0.4" max="1" step="0.05"></label>
+      <label><input name="aimAssist" type="checkbox"> Gentle aim assist (solo Casual / Practice only)</label>
+      <label><input name="aimFire" type="checkbox"> Fire while dragging to aim (touch)</label>
+      <label>Graphics <select name="quality"><option>Auto</option><option>Low</option><option>Medium</option><option>High</option></select></label>
+    </form>
+    <button id="layout-edit" type="button">Edit touch layout</button><button id="settings-reset" type="button">Reset defaults</button><button id="settings-close" type="button">Done</button>
+  </dialog>
+  <button id="layout-done" hidden>Save layout</button>
+  <dialog id="swap-dialog" class="game-panel"><h2>Swap item</h2><p id="swap-description"></p><div id="swap-slots"></div><button id="swap-cancel">Cancel</button></dialog>
   <div id="rotate-hint" class="hidden">↻ Rotate your device to landscape</div>
 
   <script type="module" src="src/main.js"></script>

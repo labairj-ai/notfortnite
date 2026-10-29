@@ -1,4 +1,45 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {createMetrics,recordMetric,summarizeMetrics} from '../shared/metrics.js';import {createWorld} from '../shared/worldgen.js';import {createPractice,completePractice,practiceLoadout} from '../shared/practice.js';
-test('metric stages are once-only, local and allowlisted',()=>{const m=createMetrics(42,'Casual');recordMetric(m,'landing',3);recordMetric(m,'weapon',10);recordMetric(m,'weapon',20);recordMetric(m,'name',4);recordMetric(m,'build',20);recordMetric(m,'build',21);assert.equal(summarizeMetrics(m).weaponAfterLanding,7);assert.equal(m.buildAttempts,2);assert.equal(m.events.name,undefined);});
-test('Casual increases loot only; Classic world remains the exact default',()=>{for(let seed=0;seed<20;seed++){const a=createWorld(seed),b=createWorld(seed,{preset:'Classic'}),c=createWorld(seed,{preset:'Casual'});assert.deepEqual(a.floorLootSpots,b.floorLootSpots);assert.equal(c.floorLootSpots.length,85);assert.equal(a.floorLootSpots.length,55);assert.deepEqual(a.chests,c.chests);}});
-test('practice state is independent, loadouts valid and tutorials skip no normal matches',()=>{const a=createPractice(),b=createPractice();completePractice(a,'Move three metres');completePractice(a,'Move three metres');assert.equal(a.completed.length,1);assert.equal(b.completed.length,0);assert.equal(practiceLoadout('bad')[1].w,'ar');});
+import test from "node:test";
+import assert from "node:assert/strict";
+import {
+  createMetrics,
+  recordMetric,
+  summarizeMetrics,
+} from "../shared/metrics.js";
+import { createWorld } from "../shared/worldgen.js";
+import {
+  createPractice,
+  completePractice,
+  practiceLoadout,
+} from "../shared/practice.js";
+test("metric stages are once-only, local and allowlisted", () => {
+  const m = createMetrics(42, "Casual");
+  recordMetric(m, "landing", 3);
+  recordMetric(m, "weapon", 10);
+  recordMetric(m, "weapon", 20);
+  recordMetric(m, "name", 4);
+  recordMetric(m, "build", 20);
+  recordMetric(m, "build", 21);
+  assert.equal(summarizeMetrics(m).weaponAfterLanding, 7);
+  assert.equal(m.buildAttempts, 2);
+  assert.equal(m.events.name, undefined);
+});
+test("Casual increases loot only; Classic world remains the exact default", () => {
+  for (let seed = 0; seed < 20; seed++) {
+    const a = createWorld(seed),
+      b = createWorld(seed, { preset: "Classic" }),
+      c = createWorld(seed, { preset: "Casual" });
+    assert.deepEqual(a.floorLootSpots, b.floorLootSpots);
+    assert.equal(c.floorLootSpots.length, 85);
+    assert.equal(a.floorLootSpots.length, 55);
+    assert.deepEqual(a.chests, c.chests);
+  }
+});
+test("practice state is independent, loadouts valid and tutorials skip no normal matches", () => {
+  const a = createPractice(),
+    b = createPractice();
+  completePractice(a, "Move three metres");
+  completePractice(a, "Move three metres");
+  assert.equal(a.completed.length, 1);
+  assert.equal(b.completed.length, 0);
+  assert.equal(practiceLoadout("bad")[1].w, "ar");
+});

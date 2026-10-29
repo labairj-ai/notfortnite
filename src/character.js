@@ -49,6 +49,7 @@ function ramp() {
     const data = new Uint8Array([110, 170, 225, 255]);
     gradientMap = new THREE.DataTexture(data, 4, 1, THREE.RedFormat);
     gradientMap.minFilter = gradientMap.magFilter = THREE.NearestFilter;
+    gradientMap.userData.sharedModel=true;
     gradientMap.needsUpdate = true;
   }
   return gradientMap;

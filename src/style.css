@@ -500,3 +500,37 @@ body.touch #hud-bottom-center { width: min(60vw, 420px); }
   from { opacity: 0; transform: translateX(-50%) scale(0.8); }
   to   { opacity: 1; transform: translateX(-50%) scale(1); }
 }
+
+/* Gameplay gestures are isolated; menus keep normal scrolling and selection. */
+#game-canvas, #hud .touch-btn, #joystick, .hud-slot { touch-action: none; user-select: none; }
+.game-panel { color: white; background: #18243b; border: 2px solid #5774a0; border-radius: 14px; max-width: min(92vw, 540px); max-height: 85dvh; overflow: auto; padding: 20px; }
+.game-panel::backdrop { background: #0009; }
+.game-panel button, .game-panel select { min-height: 44px; margin: 4px; }
+.game-panel label { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 8px 0; }
+#swap-slots { display: flex; flex-wrap: wrap; }
+body.touch #touch-buttons .touch-btn { width: var(--control-size,64px); height: var(--control-size,64px); min-width: 44px; min-height: 44px; opacity: var(--control-opacity,1); }
+body.left-handed #touch-buttons { left: max(12px,env(safe-area-inset-left)); right: auto; }
+body.editing-layout #touch-buttons { display: flex; z-index: 100; }
+body.editing-layout #hud { display: block !important; pointer-events: none; }
+body.editing-layout #touch-buttons .touch-btn { pointer-events: auto; outline: 2px dashed #ffdf6b; }
+#layout-done { position: fixed; top: max(12px,env(safe-area-inset-top)); left: 40%; z-index: 200; min-height: 44px; }
+#btn-drop { font-size: 12px; }
+@media(max-height:400px) { #hud-bottom-center { bottom: 4px; } #minimap { width: 80px; height:80px; } #desktop-help { display:none; } }
+#practice-bar { position: absolute; left: 25%; top: max(8px,env(safe-area-inset-top)); z-index: 10; width: 50%; padding: 6px; pointer-events: auto; font-size:12px; }
+#guidance { font-size: 11px; max-width: 170px; }
+#menu-screen .panel { max-height: 94dvh; overflow: auto; }
+#menu-screen select { min-height:44px; }
+@media(max-height:400px) { #practice-bar { left: 22%; width: 55%; font-size:10px; } #practice-bar button,#practice-bar select { min-height:32px; padding:2px; } }
+body.touch #touch-buttons { display: grid; grid-template-columns: repeat(2,var(--control-size,64px)); gap:8px; right:max(12px,env(safe-area-inset-right)); bottom:max(12px,env(safe-area-inset-bottom)); }
+body.touch.left-handed #touch-buttons { right:auto; left:max(12px,env(safe-area-inset-left)); }
+body.touch.left-handed #joystick { left:auto; right:34px; }
+body.touch #btn-interact.hidden { display:none; }
+body.touch #hud-bottom-center { width:min(46vw,420px); }
+body.touch #hud-slots { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); }
+body.touch .hud-slot { min-width:0; min-height:44px; }
+body.touch .slot-name { font-size:9px; overflow-wrap:anywhere; }
+body[data-control-preset="Simple"] #btn-emote { display:none; }
+#damage-direction { position:absolute;left:50%;top:50%;width:140px;height:140px;text-align:center;color:#ff6655;font-size:26px;pointer-events:none; }
+#debug-overlay { position:absolute;top:10%;left:20%;background:#000b;font-size:9px;max-height:60vh;overflow:auto;pointer-events:none;white-space:pre-wrap; }
+#practice-status { display:block; line-height:1.3; }
+#practice-bar button, #practice-bar select { min-height:44px; padding:3px; }
