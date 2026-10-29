@@ -17,7 +17,8 @@ self.addEventListener('fetch', event => {
       if (cached) return cached;
     }
     try {
-      const response = await fetch(event.request);
+      const response = await fetch(event.request,
+        event.request.mode === 'navigate' ? { cache: 'no-store' } : undefined);
       if (response.ok) await cache.put(event.request, response.clone());
       return response;
     } catch (error) {
