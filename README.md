@@ -120,7 +120,7 @@ All other art is procedural.
 - **Practice** is offline, has no storm pressure, moving/stationary targets, weapon selection, optional exercises, reset/reposition and an immediate exit. Training state never carries into matches.
 - **Controls & graphics** saves sensitivity, invert-Y, handedness, joystick, button sizes, layout, HUD opacity and quality locally. Aim assist is opt-in and restricted to solo Casual/Practice; it is disabled online.
 - **F / OPEN / SWAP** opens a chest or an explicit full-inventory replacement dialog. **G / DROP** drops the equipped item; pickaxe stays protected. Compatible healing uses stack to documented caps (15 bandages, 6 mini-shields, 3 medkits or shield potions).
-- Match summaries stay on this device. **Export local match summaries** is the only export action; no analytics service is used.
+- Match summaries stay on this device; no analytics service is used.
 
 ## Validation and review
 

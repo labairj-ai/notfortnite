@@ -1928,16 +1928,6 @@ $("practice-loadout").onchange = () => {
     syncInventoryUI();
   }
 };
-$("metrics-export").onclick = () => {
-  const data = localStorage.getItem("notfortnite-matches") || "[]",
-    url = URL.createObjectURL(new Blob([data], { type: "application/json" })),
-    a = document.createElement("a");
-  a.href = url;
-  a.download = "notfortnite-local-matches.json";
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-};
-
 $("play-solo-btn").addEventListener("click", () => {
   unlockAudio();
   startOffline();
