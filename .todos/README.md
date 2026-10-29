@@ -2,7 +2,7 @@
 
 **Created:** 2026-10-28  
 **Source baseline:** `main` @ `b9277c7a7a807be487718193f55e98b93e968ad7`  
-**Scope:** Proposed work only. All items start **TODO**; no implementation, CI execution, merge or deployment is implied.
+**Scope:** All ten items have implementation prepared in the review stack. They remain **review / acceptance pending**, not closed. No merge, deployment or physical-device signoff has occurred. See [implementation and evidence](../docs/BACKLOG-IMPLEMENTATION.md).
 
 ## Ordered backlog
 

@@ -1,0 +1,64 @@
+
+> notfortnite@1.0.0 test:ci
+> npm test && npm run build
+
+
+> notfortnite@1.0.0 test
+> node --test tests/*.test.js
+
+✔ heal stack limits, full replacement/cancel, pickaxe protection and consumption (0.736208ms)
+✔ single claimant and replay-safe pickup; out-of-range requests preserve loot (0.909666ms)
+✔ harvesting is once per accepted swing, cadence checked, no client material grants (0.877708ms)
+✔ damage, aim, range, occlusion and cadence remain host-owned (1.781458ms)
+✔ finite and plausible movement, malformed builds and unaffordable builds rejected (0.1505ms)
+✔ two independent claimants and 50/100/200ms delayed attack schedules remain replay-safe (0.579292ms)
+✔ fixed seed world and loot replay identically (4.633792ms)
+✔ host-neutral replay preserves storm and bot outcomes (14.1195ms)
+✔ 10 players, unchanged slow-storm durations, and elimination ends match (0.461083ms)
+✔ bounded navigation routes around a wall; mutable cover is reevaluated (4.939917ms)
+✔ bots do not shoot through cover; deterministic difficulty profiles use bounded decisions (4.251334ms)
+✔ agent crosses a multi-piece barrier without rounding its route into the wall (6.966ms)
+✔ input reset clears held keys, edges and deltas; disabled controls cannot latch (1.056792ms)
+✔ melee uses player surface reach rather than third-person camera (0.925917ms)
+✔ solid wall blocks melee; targets behind the player or steeply above do not qualify (0.165708ms)
+✔ wall and floor geometry do not use oversized spheres; ramps have a solid lower wedge (0.074542ms)
+✔ terrain blocks a shot (0.06025ms)
+✔ rotated ramps agree with rendered Three.js Y rotation (0.068042ms)
+✔ metric stages are once-only, local and allowlisted (0.638958ms)
+✔ Casual increases loot only; Classic world remains the exact default (26.355833ms)
+✔ practice state is independent, loadouts valid and tutorials skip no normal matches (0.227ms)
+Optional character unavailable: knight
+✔ models load on demand, share pending/cache, fail safely and respect cancellation (24.968041ms)
+✔ a new session does not inherit an aborted model request (0.401334ms)
+✔ deliberately failing determinism fixture exits nonzero (71.302708ms)
+✔ deliberately failing inventory fixture exits nonzero (48.679458ms)
+✔ deliberately failing collision fixture exits nonzero (48.675792ms)
+✔ deliberately failing controls fixture exits nonzero (49.341125ms)
+✔ Auto requires sustained slow frames and reports measured percentiles (1.561ms)
+✔ versioned settings clamp and persist, reject corrupt data and reset safely (1.2795ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 313.437208
+
+> notfortnite@1.0.0 build
+> vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 40 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                  10.93 kB │ gzip:   3.27 kB
+dist/assets/index-Bm0m7Pj6.css   13.29 kB │ gzip:   3.63 kB
+dist/assets/index-COnRA-Eo.js   724.39 kB │ gzip: 197.04 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 574ms

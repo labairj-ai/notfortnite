@@ -1,9 +1,40 @@
 {
-  "schema": 1,
-  "automated": "Run npm run test:ci and npm run test:browser at the PR head",
+  "schema": 2,
+  "implementation_sha": "afe3aba5d5488fecbdf91e6e1fbbba5de3059158",
+  "observed_at": "2026-10-29T00:18:08.582722+00:00",
+  "unit_integration": {
+    "status": "PASS",
+    "tests": 29,
+    "command": "npm test",
+    "skipped": 0
+  },
+  "build": {
+    "status": "PASS",
+    "command": "npm run build"
+  },
+  "desktop_browser_automated": {
+    "status": "PASS",
+    "scenarios": 14,
+    "browser": "Chromium 156.0.8078.4",
+    "platform": "macOS arm64",
+    "node": "v26.0.0",
+    "command": "npm run test:browser",
+    "physical_device": false
+  },
+  "latency_tests": "Deterministic 50/100/200ms logical delivery schedules; not physical WAN measurements",
+  "browser_viewports": [
+    "568x320",
+    "667x375",
+    "844x390",
+    "932x430",
+    "1024x768"
+  ],
+  "performance_evidence": "browser-performance.json; local SwiftShader, not device FPS acceptance",
+  "pacing_evidence": "pacing-simulation.json; 20 simulated seeds per preset, not human engagement",
   "desktop_human": "NOT RUN",
   "android_physical": "NOT RUN",
   "iphone_physical": "NOT RUN",
   "performance_device_acceptance": "NOT RUN",
-  "promotion": "OWNER REVIEW REQUIRED"
+  "promotion": "OWNER REVIEW REQUIRED",
+  "all_todos_closed": false
 }

@@ -1,6 +1,6 @@
 # NF-009 — Reduce mobile load time and frame-time variability
 
-Status: **TODO**  
+Status: **IMPLEMENTED — REVIEW / ACCEPTANCE PENDING**<br>
 Priority: **P2 / mobile performance**  
 Release: **3 — polish and readiness**  
 Dependencies: **NF-004, NF-010**  
@@ -46,3 +46,7 @@ Primary code: `src/models.js`, `src/main.js`, `src/world.js`, `src/style.css`, `
 ## Definition of done
 
 Code and tests are committed together; local build and all available automated checks pass; any changed shared simulation behavior is verified in both offline and online modes; a focused mobile/desktop playtest receipt identifies tested browser/device, build SHA, observed behavior, known limitations, and remaining risk. Open a review PR; do **not** merge, deploy, or declare physical-device acceptance on behalf of the owner.
+
+## Implementation review receipt
+
+Source implementation is prepared in the reviewed PR stack; see [the implementation matrix](../docs/BACKLOG-IMPLEMENTATION.md) and [machine-readable evidence](../docs/release-evidence.json). Automated results are recorded separately from human and physical-device acceptance. Original acceptance checkboxes remain open wherever the complete original criterion has not been independently certified. This task is not closed, merged, deployed, or physically certified.

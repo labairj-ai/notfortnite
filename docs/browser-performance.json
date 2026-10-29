@@ -1,0 +1,53 @@
+{
+  "implementationSha": "88fbddf586757974c8f3b4a71fabe9ebb74095bd",
+  "methodology": "Local cold Chromium headless SwiftShader, 844x390 touch emulation, DPR1, seed42. Baseline b9277c7 vs working candidate. 179 rAF intervals after start; no physical-device FPS acceptance. Asset decodedTransfer means HTTP decoded transfer, not decoded GPU memory. GPU stalls unavailable in this runner.",
+  "environment": {
+    "node": "v26.0.0",
+    "browser": "156.0.8078.4",
+    "platform": "darwin",
+    "arch": "arm64"
+  },
+  "results": [
+    {
+      "label": "baseline-b9277c7",
+      "menuReadyMs": 1521.5,
+      "menuModelCount": 13,
+      "menuModelTransferBytes": 26466408,
+      "matchModelCount": 13,
+      "matchModelTransferBytes": 26466408,
+      "frames": {
+        "samples": 179,
+        "p50": 16.699999999999818,
+        "p95": 33.400000000000546
+      },
+      "runtime": null,
+      "errors": []
+    },
+    {
+      "label": "candidate",
+      "menuReadyMs": 356.0999994277954,
+      "menuModelCount": 0,
+      "menuModelTransferBytes": 0,
+      "matchModelCount": 3,
+      "matchModelTransferBytes": 3031616,
+      "frames": {
+        "samples": 179,
+        "p50": 16.699999999999818,
+        "p95": 33.30000000000018
+      },
+      "runtime": {
+        "frame": {
+          "samples": 197,
+          "p50": 16.699999999999818,
+          "p95": 16.800000000000182,
+          "quality": "Medium"
+        },
+        "renderer": {
+          "geometries": 68,
+          "textures": 23
+        }
+      },
+      "errors": []
+    }
+  ]
+}
