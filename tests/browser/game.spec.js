@@ -347,3 +347,23 @@ test("leaving an online lobby cannot later replace a new Practice session", asyn
   await expect(page.locator("#hud")).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+test("gameplay gesture suppression does not disable menu scrolling and text selection", async ({
+  page,
+}) => {
+  await boot(page);
+  await page.locator("#settings-btn").click();
+  const r = await page.evaluate(() => ({
+    body: getComputedStyle(document.body).touchAction,
+    canvas: getComputedStyle(document.getElementById("game-canvas"))
+      .touchAction,
+    dialog: getComputedStyle(document.getElementById("settings-dialog"))
+      .touchAction,
+    input: getComputedStyle(document.querySelector("#settings-form input"))
+      .userSelect,
+  }));
+  expect(r.body).not.toBe("none");
+  expect(r.canvas).toBe("none");
+  expect(r.dialog).not.toBe("none");
+  expect(r.input).not.toBe("none");
+});
