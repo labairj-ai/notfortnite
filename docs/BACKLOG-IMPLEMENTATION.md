@@ -1,10 +1,10 @@
 # Playability implementation and acceptance
 
-Implementation source: `afe3aba` (full SHA in `release-evidence.json`). Baseline: `b9277c7`. Main remains `4460b236f3f1f863162762a76d979ff944e297ea`; no implementation PR has been merged or deployed.
+Implementation source: `5ca49e8` (full SHA in `release-evidence.json`). Baseline: `b9277c7`. Main remains `4460b236f3f1f863162762a76d979ff944e297ea`; no implementation PR has been merged or deployed.
 
 | Item | Implementation | Automated evidence | Remaining acceptance |
 |---|---|---|---|
-| NF-010 | Node test runner, deterministic replay, deliberate failure fixtures, PR validation, exact-SHA owner release workflow | 29 unit/integration tests, 14 browser scenarios, build PASS | Owner review; physical/human certification |
+| NF-010 | Node test runner, deterministic replay, deliberate failure fixtures, PR validation, exact-SHA owner release workflow | 29 unit/integration tests, 15 browser scenarios, build PASS | Owner review; physical/human certification |
 | NF-001 | Player-origin, surface-distance melee with a forward cone and cover/terrain checks; once-per-swing server-owned harvest and material feedback | Reach, occlusion, surface boundary, cadence, duplicate-action tests | 20-strike desktop/touch playtests and recordings |
 | NF-002 | Current-frame camera aim reconciled to muzzle; shared wall/floor/rotated solid-ramp and body geometry; server-owned weapon damage, cadence, range, aim and inventory; accepted-hit shield/health and direction feedback; F3 diagnostics | Geometry/terrain, forged damage, malformed/non-finite aim, replay and logical delayed-delivery tests | Real mouse/touch precision videos, WAN latency and low-end device checks. Basic movement checks are not full competitive anti-cheat |
 | NF-003 | Independent move/look/button pointer IDs; cancel, capture loss, blur, hidden tab, rotation, death, menus and teardown reset; stale online callbacks isolated | Multi-contact cancellation, blur, second-session, online-exit-to-Practice browser tests | Physical Android/iPhone interrupted-gesture and orientation sessions |
@@ -32,7 +32,7 @@ The intermediate library PRs intentionally prepare host-neutral contracts; the f
 
 `node scripts/pacing.mjs` writes its exact implementation SHA and source digests with the simulation. The simulated player begins grounded, follows a scripted nearest-weapon then nearest-opponent policy, uses shared collision/transaction rules, and runs at dt=0.2 with a 420-second cap. This is not an estimate of real human skydiving, survival, enjoyment or match duration.
 
-For `scripts/measure-browser.mjs`, archive baseline `b9277c7` into a separate temporary directory, install/link the same locked dependencies, serve it on port 5174, and serve the candidate on 5175. The script runs local cold touch-emulated Chromium/SwiftShader at 844x390/DPR1/seed42. JSON binds to the source used for the run. The performance measurement at `88fbddf` precedes only the isolated late-network-callback fix at `afe3aba`; the measured offline loading/rendering source is unchanged by that fix. No physical device or decoded GPU-byte conclusion follows from this measurement.
+For `scripts/measure-browser.mjs`, archive baseline `b9277c7` into a separate temporary directory, install/link the same locked dependencies, serve it on port 5174, and serve the candidate on 5175. The script runs local cold touch-emulated Chromium/SwiftShader at 844x390/DPR1/seed42. JSON binds to the source used for the run. The performance measurement at `88fbddf` precedes the late-network-callback isolation and menu-gesture scoping corrections at `afe3aba`/`5ca49e8`. Functional browser tests were rerun for those corrections; the performance numbers apply to the explicitly recorded measurement commit. No physical device or decoded GPU-byte conclusion follows from this measurement.
 
 Historical local failures (pointer-lock rejection, input-observer render dependence, Practice reset progress and retained skeleton textures) were corrected with relevant regressions. PR #6's original CI timeout is retained as a failure; the session-readiness observer was moved out of the animation loop and the subsequent exact-head run passed. No CI result was waived or relabeled.
 
