@@ -739,12 +739,34 @@ function onLocalDeath() {
 // ---------------------------------------------------------------------------
 // Local player physics + actions
 // ---------------------------------------------------------------------------
+let pointerLockWanted = false;
+function releaseCursor() {
+  pointerLockWanted = false;
+  if (document.pointerLockElement) document.exitPointerLock();
+}
 function requestLock() {
+  pointerLockWanted = true;
   try {
-    const p = canvas.requestPointerLock();
-    p?.catch?.(() => {});
+    Promise.resolve(canvas.requestPointerLock())
+      .then(() => {
+        if (!pointerLockWanted || !ctl.enabled) releaseCursor();
+      })
+      .catch(() => {});
   } catch {}
 }
+window.addEventListener("keydown", (e) => {
+  if (e.code === "Escape") {
+    releaseCursor();
+    ctl.resetInputs("escape");
+  }
+});
+document.addEventListener("pointerlockchange", () => {
+  if (
+    document.pointerLockElement === canvas &&
+    (!pointerLockWanted || !ctl.enabled)
+  )
+    releaseCursor();
+});
 
 function enterPlay() {
   ctl.resetInputs("enter-play");
@@ -757,7 +779,7 @@ function enterPlay() {
 
 function exitPlayControls() {
   ctl.enabled = false;
-  if (document.pointerLockElement) document.exitPointerLock();
+  releaseCursor();
 }
 
 canvas.addEventListener("click", () => {
@@ -1277,7 +1299,7 @@ function itemLabel(i) {
 function showSwap(drop) {
   ctl.resetInputs("swap");
   ctl.enabled = false;
-  if (document.pointerLockElement) document.exitPointerLock();
+  releaseCursor();
   const dialog = $("swap-dialog");
   $("swap-description").textContent =
     "Pick up " + itemLabel(drop.item) + "? Choose an item to replace.";

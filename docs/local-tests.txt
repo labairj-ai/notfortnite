@@ -6,36 +6,36 @@
 > notfortnite@1.0.0 test
 > node --test tests/*.test.js
 
-✔ heal stack limits, full replacement/cancel, pickaxe protection and consumption (0.747208ms)
-✔ single claimant and replay-safe pickup; out-of-range requests preserve loot (2.964125ms)
-✔ harvesting is once per accepted swing, cadence checked, no client material grants (0.835333ms)
-✔ damage, aim, range, occlusion and cadence remain host-owned (0.673542ms)
-✔ finite and plausible movement, malformed builds and unaffordable builds rejected (0.286667ms)
-✔ two independent claimants and 50/100/200ms delayed attack schedules remain replay-safe (0.849333ms)
-✔ fixed seed world and loot replay identically (7.280791ms)
-✔ host-neutral replay preserves storm and bot outcomes (16.853667ms)
-✔ 10 players, unchanged slow-storm durations, and elimination ends match (0.411208ms)
-✔ bounded navigation routes around a wall; mutable cover is reevaluated (4.691458ms)
-✔ bots do not shoot through cover; deterministic difficulty profiles use bounded decisions (4.448042ms)
-✔ agent crosses a multi-piece barrier without rounding its route into the wall (8.458417ms)
-✔ input reset clears held keys, edges and deltas; disabled controls cannot latch (1.095875ms)
-✔ melee uses player surface reach rather than third-person camera (0.875542ms)
-✔ solid wall blocks melee; targets behind the player or steeply above do not qualify (0.674291ms)
-✔ wall and floor geometry do not use oversized spheres; ramps have a solid lower wedge (0.2135ms)
-✔ terrain blocks a shot (0.144292ms)
-✔ rotated ramps agree with rendered Three.js Y rotation (0.141ms)
-✔ metric stages are once-only, local and allowlisted (0.636875ms)
-✔ Casual increases loot only; Classic world remains the exact default (20.184125ms)
-✔ practice state is independent, loadouts valid and tutorials skip no normal matches (0.113417ms)
+✔ heal stack limits, full replacement/cancel, pickaxe protection and consumption (0.77475ms)
+✔ single claimant and replay-safe pickup; out-of-range requests preserve loot (0.431125ms)
+✔ harvesting is once per accepted swing, cadence checked, no client material grants (1.085417ms)
+✔ damage, aim, range, occlusion and cadence remain host-owned (0.303083ms)
+✔ finite and plausible movement, malformed builds and unaffordable builds rejected (0.124666ms)
+✔ two independent claimants and 50/100/200ms delayed attack schedules remain replay-safe (0.452542ms)
+✔ fixed seed world and loot replay identically (7.150791ms)
+✔ host-neutral replay preserves storm and bot outcomes (13.087167ms)
+✔ 10 players, unchanged slow-storm durations, and elimination ends match (0.439042ms)
+✔ bounded navigation routes around a wall; mutable cover is reevaluated (4.480375ms)
+✔ bots do not shoot through cover; deterministic difficulty profiles use bounded decisions (4.713166ms)
+✔ agent crosses a multi-piece barrier without rounding its route into the wall (8.170292ms)
+✔ input reset clears held keys, edges and deltas; disabled controls cannot latch (1.041125ms)
+✔ melee uses player surface reach rather than third-person camera (1.859375ms)
+✔ solid wall blocks melee; targets behind the player or steeply above do not qualify (0.364083ms)
+✔ wall and floor geometry do not use oversized spheres; ramps have a solid lower wedge (0.151625ms)
+✔ terrain blocks a shot (0.125208ms)
+✔ rotated ramps agree with rendered Three.js Y rotation (0.141375ms)
+✔ metric stages are once-only, local and allowlisted (1.336625ms)
+✔ Casual increases loot only; Classic world remains the exact default (14.971125ms)
+✔ practice state is independent, loadouts valid and tutorials skip no normal matches (0.104167ms)
 Optional character unavailable: knight
-✔ models load on demand, share pending/cache, fail safely and respect cancellation (24.5195ms)
-✔ a new session does not inherit an aborted model request (0.3655ms)
-✔ deliberately failing determinism fixture exits nonzero (64.621542ms)
-✔ deliberately failing inventory fixture exits nonzero (46.278875ms)
-✔ deliberately failing collision fixture exits nonzero (43.5355ms)
-✔ deliberately failing controls fixture exits nonzero (42.670417ms)
-✔ Auto requires sustained slow frames and reports measured percentiles (2.42975ms)
-✔ versioned settings clamp and persist, reject corrupt data and reset safely (1.186209ms)
+✔ models load on demand, share pending/cache, fail safely and respect cancellation (25.112ms)
+✔ a new session does not inherit an aborted model request (0.368ms)
+✔ deliberately failing determinism fixture exits nonzero (60.463167ms)
+✔ deliberately failing inventory fixture exits nonzero (43.534ms)
+✔ deliberately failing collision fixture exits nonzero (41.956167ms)
+✔ deliberately failing controls fixture exits nonzero (42.469416ms)
+✔ Auto requires sustained slow frames and reports measured percentiles (1.551875ms)
+✔ versioned settings clamp and persist, reject corrupt data and reset safely (1.192708ms)
 ℹ tests 29
 ℹ suites 0
 ℹ pass 29
@@ -43,7 +43,7 @@ Optional character unavailable: knight
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 287.820833
+ℹ duration_ms 284.703166
 
 > notfortnite@1.0.0 build
 > vite build
@@ -55,10 +55,10 @@ rendering chunks...
 computing gzip size...
 dist/index.html                  11.01 kB │ gzip:   3.30 kB
 dist/assets/index-D93mFImO.css   13.48 kB │ gzip:   3.67 kB
-dist/assets/index-CXNZtcDn.js   724.40 kB │ gzip: 197.04 kB
+dist/assets/index-ghOHuY-4.js   724.60 kB │ gzip: 197.11 kB
 
 (!) Some chunks are larger than 500 kB after minification. Consider:
 - Using dynamic import() to code-split the application
 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 494ms
+✓ built in 517ms
