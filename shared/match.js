@@ -1,3 +1,4 @@
+import {tickBot as stepBot} from './bots.js';
 // Match simulation shared by the browser (offline vs-CPU mode) and the Node
 // server (online matches). Operates on plain objects; emits events through
 // api.onEvent so each host can relay/render them its own way.
@@ -9,9 +10,9 @@ import {
 let uid = 0;
 export function newId(prefix) { return prefix + (uid++) + '_' + Math.floor(Math.random() * 1e6); }
 
-export function createMatch(seed) {
+export function createMatch(seed, options = {}) {
   return {
-    seed,
+    seed, difficulty: options.difficulty || 'Standard', preset: options.preset || 'Classic', noises: [],
     state: 'lobby',            // lobby | play | ended
     players: new Map(),
     groundLoot: new Map(),     // id -> {id, item, x, y, z}
@@ -39,6 +40,7 @@ export function addPlayer(m, { id, name, custom, isBot }) {
     sz = (rng() - 0.5) * (MAP_SIZE - 140);
     if (!m.heightAt || m.heightAt(sx, sz) > 1.4) break;
   }
+  if(m.preset==='Casual'&&m.world?.pois.length){const poi=m.world.pois[Math.floor(rng()*m.world.pois.length)];sx=poi.x+(rng()-.5)*28;sz=poi.z+(rng()-.5)*28;}
   const p = {
     id, name, custom: custom || null, isBot: !!isBot,
     x: sx,
@@ -163,7 +165,7 @@ export function startMatch(m, api) {
 }
 
 export function tickMatch(m, dt, api) {
-  if (m.state !== 'play') return;
+  if (m.state !== 'play' || !Number.isFinite(dt) || dt <= 0 || dt > .25) return;
   m.time += dt;
   tickStorm(m, dt, api);
   for (const p of m.players.values()) {
@@ -185,7 +187,7 @@ export function tickMatch(m, dt, api) {
         }
       }
     }
-    if (p.isBot && p.alive) tickBot(m, p, dt, api);
+    if (p.isBot && p.alive) stepBot(m, p, dt, api, damagePlayer);
   }
 }
 
@@ -224,96 +226,3 @@ function tickStorm(m, dt, api) {
   }
 }
 
-// --- Bot AI -----------------------------------------------------------------
-function tickBot(m, b, dt, api) {
-  const brain = b.bot;
-  const s = m.storm;
-
-  // choose enemy: nearest alive player within 45m
-  brain.retarget -= dt;
-  if (brain.retarget <= 0) {
-    brain.retarget = 0.8;
-    let best = null, bestD = 30;
-    for (const p of m.players.values()) {
-      if (p.id === b.id || !p.alive || p.y > 40) continue; // ignore skydivers
-      const d = dist2d(b.x, b.z, p.x, p.z);
-      if (d >= bestD) continue;
-      // at most 2 bots gang up on the same target
-      let focused = 0;
-      for (const q of m.players.values()) {
-        if (q.isBot && q.alive && q.id !== b.id && q.bot && q.bot.enemy === p.id) focused++;
-      }
-      if (focused >= 2) continue;
-      bestD = d; best = p;
-    }
-    const newEnemy = best ? best.id : null;
-    if (newEnemy !== brain.enemy) brain.reaction = 1.0 + m.rng() * 0.8; // notice delay
-    brain.enemy = newEnemy;
-
-    // movement goal
-    const distToStorm = dist2d(b.x, b.z, s.cx, s.cz);
-    if (distToStorm > s.r * 0.85) {
-      // head toward safe zone with jitter
-      const ang = Math.atan2(s.cz - b.z, s.cx - b.x) + (m.rng() - 0.5) * 0.6;
-      brain.tx = b.x + Math.cos(ang) * 40;
-      brain.tz = b.z + Math.sin(ang) * 40;
-    } else if (!brain.enemy && m.rng() < 0.4) {
-      brain.tx = b.x + (m.rng() - 0.5) * 60;
-      brain.tz = b.z + (m.rng() - 0.5) * 60;
-    }
-  }
-
-  const enemy = brain.enemy ? m.players.get(brain.enemy) : null;
-
-  // move
-  let mvx = brain.tx - b.x, mvz = brain.tz - b.z;
-  const mvd = Math.hypot(mvx, mvz);
-  let moving = false;
-  if (enemy && enemy.alive) {
-    // strafe-ish: keep 12-25m distance
-    const d = dist2d(b.x, b.z, enemy.x, enemy.z);
-    if (d > 22) { mvx = enemy.x - b.x; mvz = enemy.z - b.z; }
-    else if (d < 10) { mvx = b.x - enemy.x; mvz = b.z - enemy.z; }
-    else { mvx = 0; mvz = 0; }
-    b.yaw = Math.atan2(enemy.x - b.x, enemy.z - b.z);
-  }
-  const spd = PLAYER.SPEED * 0.78;
-  const md = Math.hypot(mvx, mvz);
-  if (md > 1.5) {
-    b.x += (mvx / md) * spd * dt;
-    b.z += (mvz / md) * spd * dt;
-    if (!enemy) b.yaw = Math.atan2(mvx, mvz);
-    moving = true;
-  } else if (mvd > 1.5 && !enemy) {
-    moving = false;
-  }
-  // clamp to map
-  const lim = MAP_SIZE / 2 - 6;
-  b.x = Math.max(-lim, Math.min(lim, b.x));
-  b.z = Math.max(-lim, Math.min(lim, b.z));
-  b.y = api.heightAt(b.x, b.z);
-  b.anim = moving ? 1 : 0;
-
-  // shoot — after a reaction delay, and never in the first seconds of a match
-  // (everyone is "looting"); bots are beatable on purpose
-  brain.shootCd -= dt;
-  brain.reaction -= dt;
-  if (enemy && enemy.alive && brain.shootCd <= 0 && brain.reaction <= 0 && m.time > 6) {
-    const w = WEAPONS[b.weapon] || WEAPONS.pistol;
-    brain.shootCd = Math.max(0.55, w.rate) + m.rng() * 0.7;
-    const d = dist2d(b.x, b.z, enemy.x, enemy.z);
-    if (d <= w.range) {
-      b.anim |= 2;
-      api.onEvent({
-        t: 'shot', from: b.id,
-        fx: b.x, fy: b.y + 1.5, fz: b.z,
-        tx: enemy.x, ty: enemy.y + 1.2, tz: enemy.z,
-      });
-      const hitChance = Math.max(0.04, 0.26 - d * 0.006);
-      if (m.rng() < hitChance) {
-        const dmg = Math.round(w.dmg * RARITIES[b.rarity].mult * (0.6 + m.rng() * 0.35));
-        damagePlayer(m, enemy.id, dmg, b.id, api);
-      }
-    }
-  }
-}
