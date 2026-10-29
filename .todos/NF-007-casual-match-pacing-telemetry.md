@@ -1,6 +1,6 @@
 # NF-007 — Improve battle-royale pacing using measured encounter telemetry
 
-Status: **IMPLEMENTED — REVIEW / ACCEPTANCE PENDING**<br>
+Status: **IMPLEMENTED — PLAYTEST ACCEPTANCE PENDING**<br>
 Priority: **P1 / engagement**  
 Release: **2 — engagement**  
 Dependencies: **NF-005, NF-006, NF-010**  
@@ -49,4 +49,4 @@ Code and tests are committed together; local build and all available automated c
 
 ## Implementation review receipt
 
-Source implementation is prepared in the reviewed PR stack; see [the implementation matrix](../docs/BACKLOG-IMPLEMENTATION.md) and [machine-readable evidence](../docs/release-evidence.json). Automated results are recorded separately from human and physical-device acceptance. Original acceptance checkboxes remain open wherever the complete original criterion has not been independently certified. This task is not closed, merged, deployed, or physically certified.
+Source implementation is prepared in the reviewed PR stack; see [the implementation matrix](../docs/BACKLOG-IMPLEMENTATION.md) and [machine-readable evidence](../docs/release-evidence.json). Automated results are recorded separately from human and physical-device acceptance. Original acceptance checkboxes remain open wherever the complete original criterion has not been independently certified. The owner subsequently requested a direct source push. This task remains open for human/device acceptance; publishing does not grant physical certification.

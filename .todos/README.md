@@ -2,7 +2,7 @@
 
 **Created:** 2026-10-28  
 **Source baseline:** `main` @ `b9277c7a7a807be487718193f55e98b93e968ad7`  
-**Scope:** All ten items have implementation prepared in the review stack. They remain **review / acceptance pending**, not closed. No merge, deployment or physical-device signoff has occurred. See [implementation and evidence](../docs/BACKLOG-IMPLEMENTATION.md).
+**Scope:** All ten items have implementation prepared in the review stack. The owner requested a direct main push for this early iteration. Items remain **playtest acceptance pending**, not closed, with no physical-device signoff. See [implementation and evidence](../docs/BACKLOG-IMPLEMENTATION.md).
 
 ## Ordered backlog
 

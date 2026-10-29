@@ -1,6 +1,6 @@
 # Playability implementation and acceptance
 
-Implementation source: `5ca49e8` (full SHA in `release-evidence.json`). Baseline: `b9277c7`. Main remains `4460b236f3f1f863162762a76d979ff944e297ea`; no implementation PR has been merged or deployed.
+Implementation source: `5e256dd` (full SHA in `release-evidence.json`). Baseline: `b9277c7`. The owner requested an early-iteration direct push ("just push"); the implementation is now published to main. Physical-device/human acceptance remains separate.
 
 | Item | Implementation | Automated evidence | Remaining acceptance |
 |---|---|---|---|
@@ -22,9 +22,9 @@ Implementation source: `5ca49e8` (full SHA in `release-evidence.json`). Baseline
 3. [PR #4 — shared simulation](https://github.com/labairj-ai/notfortnite/pull/4)
 4. [PR #5 — settings/quality](https://github.com/labairj-ai/notfortnite/pull/5)
 5. [PR #6 — local metrics/Practice state](https://github.com/labairj-ai/notfortnite/pull/6)
-6. [Integration PR #7](https://github.com/labairj-ai/notfortnite/pull/7) — connects both hosts, UI, training, on-demand assets, cleanup and expanded acceptance fixtures. Review in dependency order; no automatic merge/promotion.
+6. [Integration PR #7](https://github.com/labairj-ai/notfortnite/pull/7) — connects both hosts, UI, training, on-demand assets, cleanup and expanded acceptance fixtures. Retained as the implementation history; the owner subsequently requested publishing directly to main.
 
-The intermediate library PRs intentionally prepare host-neutral contracts; the final integration PR connects them to both live game hosts. Unit code is formatted in the integration PR for reviewability. These are implementation reviews, not claims that physical acceptance has been completed.
+The intermediate library PRs intentionally prepare host-neutral contracts; the final integration PR connects them to both live game hosts. Unit code is formatted in the integration PR for reviewability. Publishing these source changes does not claim physical acceptance.
 
 ## Reproduction
 
@@ -36,4 +36,6 @@ For `scripts/measure-browser.mjs`, archive baseline `b9277c7` into a separate te
 
 Historical local failures (pointer-lock rejection, input-observer render dependence, Practice reset progress and retained skeleton textures) were corrected with relevant regressions. PR #6's original CI timeout is retained as a failure; the session-readiness observer was moved out of the animation loop and the subsequent exact-head run passed. No CI result was waived or relabeled.
 
-Original checklists are retained; unperformed human/device criteria remain unchecked. Source changes here do not close any NF item or authorize release.
+Original checklists are retained; unperformed human/device criteria remain unchecked. The owner authorized publishing this early iteration. Physical/human acceptance remains pending; the build/browser deployment gate still applies.
+
+The first integration CI runs failed because desktop pointer lock intercepted clicks on Practice controls. Practice now opens with a free cursor, click-to-aim and an Esc hint; the browser fixture exercises Esc before using controls. No assertion, timeout or scenario was removed to bypass that failure.

@@ -1,7 +1,7 @@
 {
   "schema": 2,
-  "implementation_sha": "5ca49e840828b3a0a945caca266692122d9f3d96",
-  "observed_at": "2026-10-29T00:21:22.802219+00:00",
+  "implementation_sha": "5e256dda7d197fd471210499d42087d66ac6e506",
+  "observed_at": "2026-10-29T00:27:35.354657+00:00",
   "unit_integration": {
     "status": "PASS",
     "tests": 29,
@@ -35,6 +35,8 @@
   "android_physical": "NOT RUN",
   "iphone_physical": "NOT RUN",
   "performance_device_acceptance": "NOT RUN",
-  "promotion": "OWNER REVIEW REQUIRED",
-  "all_todos_closed": false
+  "promotion": "OWNER REQUESTED DIRECT PUSH; DEPLOYMENT CHECKS PENDING",
+  "all_todos_closed": false,
+  "owner_instruction": "dont be so formal on this, this is an early iteration just push",
+  "ci_prior_failure": "40793520304: desktop pointer lock intercepted Practice buttons; cursor-entry behavior corrected and local suite rerun."
 }
